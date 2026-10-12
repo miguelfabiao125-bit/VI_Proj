@@ -1,22 +1,24 @@
 async function main() {
     const cards = await loadCards("CPI-32.csv");
+    const artists = cardsPerArtistYear(cards);
 
     const data = {
         cards: cards,
-        artists: cardsPerArtistYear(cards),
+        artists: artists,
+        artistGroups: artistsByDebut(artists),
         yearOfSet: yearsPerSet(cards)
     };
 
-    const state = {
-        artist: null,
-        years: []
-    };
-
+    const state = { artists: [], years: [] };
     const views = [];
 
     const actions = {
-        selectArtist: function (artist) {
-            state.artist = artist;
+        toggleArtist: function (artist) {
+            if (state.artists.includes(artist)) {
+                state.artists = state.artists.filter(name => name !== artist);
+            } else {
+                state.artists = state.artists.concat(artist);
+            }
             updateViews();
         },
 
@@ -36,42 +38,30 @@ async function main() {
         });
     }
 
-    function addView(containerId, build) {
-        const view = {
-            container: document.getElementById(containerId),
-            chart: null
-        };
+    function addView(containerId, createChart) {
+        const view = { container: document.getElementById(containerId), chart: null };
 
-        view.draw = function () {
+        function draw() {
             if (view.container.clientWidth === 0 || view.container.clientHeight === 0) {
                 return;
             }
-
             view.container.innerHTML = "";
-            view.chart = build(view.container, data, actions);
+            view.chart = createChart(view.container, data, actions);
             view.chart.update(state);
-        };
+        }
 
-        let pendingFrame;
-        const resizeObserver = new ResizeObserver(function () {
-            cancelAnimationFrame(pendingFrame);
-            pendingFrame = requestAnimationFrame(view.draw);
-        });
-        resizeObserver.observe(view.container);
+        let frame;
+        new ResizeObserver(function () {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(draw);
+        }).observe(view.container);
 
         views.push(view);
     }
 
-    addView("line-chart", function (container, data, actions) {
-        const chart = createLineChart(container, data.artists, actions.selectArtist);
-
-        return {
-            update: function (state) {
-                chart.highlight(state.artist);
-                chart.highlightYears(state.years);
-            }
-        };
-    });
+    addView("line-chart", createLineChart);
+    addView("artist-list", createArtistList);
+    addView("artist-pair", createArtistPair);
 
     window.selectSets = actions.selectSets;
 }

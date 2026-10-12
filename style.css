@@ -1,4 +1,3 @@
-
 * {
     font-family: "Futura", "Futura PT", "Jost", "Century Gothic", "Trebuchet MS", sans-serif;
     font-weight: 700;
@@ -24,12 +23,6 @@ body {
     left: 0;
     width: 100%;
     height: 50%;
-}
-
-.top-area img {
-    display: block;
-    width: 100%;
-    height: 100%;
 }
 
 .circle {
@@ -77,3 +70,146 @@ body {
     min-width: 0;
     overflow: hidden;
 }
+
+.band {
+    position: absolute;
+    left: 0;
+    top: 29.4cqw;
+    width: 100%;
+    height: 2.2cqw;
+    background: black;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.view-artists {
+    position: absolute;
+    left: 1%;
+    top: 3%;
+    width: 17.6%;
+    height: 88%;
+    z-index: 2;
+}
+
+.artist-panel {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: #ee6a61;
+    border: 0.25cqw solid black;
+    border-radius: 1.2cqw;
+    color: white;
+    padding: 0.8cqw;
+}
+
+.artist-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.7cqw;
+    margin-bottom: 0.5cqw;
+}
+
+.artist-title { font-size: 2.2cqw; }
+
+.artist-search {
+    width: 60%;
+    min-width: 0;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 1cqw;
+    padding: 0.25cqw 0.7cqw 0.25cqw 2.3cqw;
+    font-size: 1cqw;
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round'%3E%3Ccircle cx='10' cy='10' r='7'/%3E%3Cline x1='15.5' y1='15.5' x2='22' y2='22'/%3E%3C/svg%3E")
+        no-repeat 0.8cqw center / 1.1cqw 1.1cqw;
+    outline: none;
+}
+
+.artist-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    direction: rtl;
+    scrollbar-width: thin;
+    scrollbar-color: white rgba(255, 255, 255, 0.35);
+}
+
+.artist-scroll::-webkit-scrollbar { width: 0.9cqw; }
+.artist-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 1cqw;
+}
+.artist-scroll::-webkit-scrollbar-thumb {
+    background: white;
+    border-radius: 1cqw;
+}
+
+.artist-content {
+    direction: ltr;
+    padding-left: 0.8cqw;
+}
+
+.artist-year { font-size: 1.7cqw; margin: 0.3cqw 0; }
+
+.artist-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5cqw;
+    font-size: 1.15cqw;
+    padding: 0.15cqw 0;
+    cursor: pointer;
+}
+
+.artist-row:hover { background: rgba(255, 255, 255, 0.2); }
+
+.artist-row input {
+    flex: none;
+    width: 1.1cqw;
+    height: 1.1cqw;
+    margin: 0;
+    accent-color: #e33125;
+}
+
+.artist-empty { font-size: 1.1cqw; padding: 0.5cqw 0; }
+
+.view-pair {
+    position: absolute;
+    left: 19.2%;
+    top: 7%;
+    width: 13%;
+    height: 83%;
+    z-index: 2;
+}
+
+.pair { display: flex; align-items: flex-start; gap: 0.5cqw; }
+
+.pair-star {
+    font-size: 3cqw;
+    line-height: 1;
+    color: gold;
+    visibility: hidden;
+}
+
+.pair-body { display: flex; flex-direction: column; align-items: center; }
+
+.pair-frame {
+    width: 8.6cqw;
+    aspect-ratio: 5 / 7;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    font-size: 1.3cqw;
+}
+
+.pair-frame.empty {
+    border: 0.3cqw dashed black;
+    border-radius: 1cqw;
+}
+
+.pair-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+.pair-name { margin-top: 0.6cqw; font-size: 1.3cqw; color: white; text-align: center; }

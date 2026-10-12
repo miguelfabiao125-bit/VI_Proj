@@ -1,30 +1,23 @@
-function createLineChart(container, artists, onSelect) {
-
-    const margin = { top: 28, right: 30, bottom: 45, left: 55 };
-    const transitionTime = 320;
+function createLineChart(container, data, actions) {
+    const margin = { top: 26, right: 30, bottom: 45, left: 55 };
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+    const time = 320;
     const yAxisSteps = [1, 2, 5, 10, 25, 50, 100, 200, 311];
-    const yScaleConstant = 1;
-    const bandColor = "#bae6f7";
 
-    const lineStyles = {
+    const styles = {
         normal:   { stroke: "lightgray", width: 1.5, opacity: 0.7 },
         dimmed:   { stroke: "lightgray", width: 1.5, opacity: 0.4 },
         selected: { stroke: "red",       width: 3,   opacity: 1 }
     };
 
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
-
-
-    const svg = d3.select(container)
-        .append("svg")
+    const svg = d3.select(container).append("svg")
         .attr("width", width)
         .attr("height", height);
 
-    svg.append("defs")
-        .append("clipPath")
+    svg.append("defs").append("clipPath")
         .attr("id", "line-chart-clip")
         .append("rect")
         .attr("x", -2)
@@ -33,123 +26,90 @@ function createLineChart(container, artists, onSelect) {
         .attr("height", chartHeight + 4);
 
     const chart = svg.append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        .attr("transform", `translate(${margin.left},${margin.top})`);
 
-
-    const allPoints = artists.flatMap(artist => artist.values);
-    const maxCards = d3.max(allPoints, point => point.cards);
+    const points = data.artists.flatMap(artist => artist.values);
+    const maxCards = d3.max(points, point => point.cards);
 
     const x = d3.scaleLinear()
-        .domain(d3.extent(allPoints, point => point.year))
+        .domain(d3.extent(points, point => point.year))
         .range([0, chartWidth]);
 
     const y = d3.scaleSymlog()
-        .constant(yScaleConstant)
+        .constant(1)
         .domain([1, maxCards])
         .range([chartHeight, 0]);
 
+    const fullX = x.domain();
+    const fullY = y.domain();
     const fullYTicks = yAxisSteps.filter(step => step <= maxCards);
-
-    const fullYDomain = y.domain();
-    const fullYRange = y.range();
-    const fullXDomain = x.domain();
     let yTicks = fullYTicks;
 
+    function addText(text, textX, textY) {
+        return chart.append("text")
+            .attr("x", textX)
+            .attr("y", textY)
+            .attr("text-anchor", "middle")
+            .text(text);
+    }
 
-    chart.append("text")
-        .attr("x", chartWidth / 2)
-        .attr("y", -10)
-        .attr("text-anchor", "middle")
-        .attr("font-size", "16px")
-        .text("Pokémon Cards Produced per Artist over Time");
+    addText("Pokémon Cards Produced per Artist over Time", chartWidth / 2, -10);
+    addText("Year", chartWidth / 2, chartHeight + 38);
+    addText("Number of Cards", -chartHeight / 2, -40).attr("transform", "rotate(-90)");
 
-    const xAxisGroup = chart.append("g")
-        .attr("transform", "translate(0," + chartHeight + ")");
+    const xAxis = chart.append("g").attr("transform", `translate(0,${chartHeight})`);
+    const yAxis = chart.append("g");
 
-    const yAxisGroup = chart.append("g");
+    function drawAxes(duration) {
+        const years = x.domain()[1] - x.domain()[0];
+        const xTicks = Math.min(10, Math.max(1, Math.floor(years)));
 
-    chart.append("text")
-        .attr("x", chartWidth / 2)
-        .attr("y", chartHeight + 38)
-        .attr("text-anchor", "middle")
-        .text("Year");
-
-    chart.append("text")
-        .attr("transform", "rotate(-90)")
-        .attr("x", -chartHeight / 2)
-        .attr("y", -40)
-        .attr("text-anchor", "middle")
-        .text("Number of Cards");
-
-    function drawAxes(time) {
-        const yearRange = x.domain()[1] - x.domain()[0];
-        const numberOfXTicks = Math.min(10, Math.max(1, Math.floor(yearRange)));
-
-        const xAxis = d3.axisBottom(x)
-            .ticks(numberOfXTicks)
-            .tickFormat(d3.format("d"));
-
-        const yAxis = d3.axisLeft(y)
-            .tickValues(yTicks);
-
-        xAxisGroup.transition().duration(time).call(xAxis);
-        yAxisGroup.transition().duration(time).call(yAxis);
+        xAxis.transition().duration(duration)
+            .call(d3.axisBottom(x).ticks(xTicks).tickFormat(d3.format("d")));
+        yAxis.transition().duration(duration)
+            .call(d3.axisLeft(y).tickValues(yTicks));
     }
 
     drawAxes(0);
 
-
-    const bandGroup = chart.append("g")
-        .attr("clip-path", "url(#line-chart-clip)");
-
-    const bandRect = bandGroup.append("rect")
+    const band = chart.append("g")
+        .attr("clip-path", "url(#line-chart-clip)")
+        .append("rect")
         .attr("height", chartHeight)
-        .attr("fill", bandColor)
+        .attr("fill", "#bae6f7")
         .attr("opacity", 0.85)
         .style("display", "none");
 
     let bandYears = [];
 
-    function drawBand(time) {
+    function drawBand() {
         if (bandYears.length === 0) {
-            bandRect.style("display", "none");
+            band.style("display", "none");
             return;
         }
 
-        const firstYear = d3.min(bandYears);
-        const lastYear = d3.max(bandYears);
+        const first = d3.min(bandYears);
+        const last = d3.max(bandYears);
+        const padding = first === last ? 0.4 : 0;
+        const left = x(first - padding);
+        const bandWidth = Math.max(x(last + padding) - left, 2);
 
-        let padding = 0;
-        if (firstYear === lastYear) {
-            padding = 0.4;
-        }
-
-        const left = x(firstYear - padding);
-        const right = x(lastYear + padding);
-        const bandWidth = Math.max(right - left, 2);
-
-        const wasHidden = bandRect.style("display") === "none";
-        bandRect.style("display", null);
+        const wasHidden = band.style("display") === "none";
+        band.style("display", null);
 
         if (wasHidden) {
-            bandRect.attr("x", left).attr("width", bandWidth);
+            band.attr("x", left).attr("width", bandWidth);
         } else {
-            bandRect.transition().duration(time)
-                .attr("x", left)
-                .attr("width", bandWidth);
+            band.transition().duration(time).attr("x", left).attr("width", bandWidth);
         }
     }
-
 
     const lineGenerator = d3.line()
         .x(point => x(point.year))
         .y(point => y(point.cards));
 
     function pointsOf(item) {
-        if (item.values.length === 1) {
-            return [item.values[0], item.values[0]];
-        }
-        return item.values;
+        return item.values.length === 1 ? [item.values[0], item.values[0]] : item.values;
     }
 
     function applyStyle(selection, style) {
@@ -160,7 +120,7 @@ function createLineChart(container, artists, onSelect) {
     }
 
     const lines = chart.selectAll(".artist-line")
-        .data(artists)
+        .data(data.artists)
         .enter()
         .append("path")
         .attr("class", "artist-line")
@@ -168,64 +128,42 @@ function createLineChart(container, artists, onSelect) {
         .attr("d", item => lineGenerator(pointsOf(item)))
         .attr("fill", "none")
         .attr("stroke-linecap", "round")
-        .style("cursor", "pointer");
+        .style("cursor", "pointer")
+        .on("click", (event, item) => actions.toggleArtist(item.artist));
 
-    applyStyle(lines, lineStyles.normal);
+    applyStyle(lines, styles.normal);
 
-    lines.on("click", function (event, item) {
-        onSelect(item.artist);
-    });
-
-    const artistLabel = chart.append("text")
-        .attr("x", chartWidth - 10)
-        .attr("y", 20)
+    const label = addText("", chartWidth - 10, 8)
         .attr("text-anchor", "end")
-        .attr("font-size", "16px")
         .attr("fill", "red")
         .style("pointer-events", "none");
 
-
-    function redrawEverything() {
-        drawAxes(transitionTime);
-        drawBand(transitionTime);
-        lines.transition().duration(transitionTime)
-            .attr("d", item => lineGenerator(pointsOf(item)));
+    function redraw() {
+        drawAxes(time);
+        drawBand();
+        lines.transition().duration(time).attr("d", item => lineGenerator(pointsOf(item)));
     }
 
     function zoomTo(selection) {
-        const left = selection[0][0];
-        const top = selection[0][1];
-        const right = selection[1][0];
-        const bottom = selection[1][1];
-
+        const [[left, top], [right, bottom]] = selection;
         const firstYear = x.invert(left);
         const lastYear = x.invert(right);
-        const lowestValue = y.invert(bottom);
-        const highestValue = y.invert(top);
+        const lowest = y.invert(bottom);
+        const highest = y.invert(top);
 
-        if (lastYear - firstYear < 1 || highestValue - lowestValue <= 0) {
+        if (lastYear - firstYear < 1 || highest - lowest <= 0) {
             return;
         }
 
         x.domain([firstYear, lastYear]);
-        y.domain([Math.max(1, lowestValue), highestValue]).range([chartHeight, 0]);
+        y.domain([Math.max(1, lowest), highest]);
 
-        const ticksInside = fullYTicks.filter(tick => tick >= lowestValue && tick <= highestValue);
-        if (ticksInside.length >= 3) {
-            yTicks = ticksInside;
-        } else {
-            yTicks = d3.ticks(lowestValue, highestValue, 5)
-                .filter(tick => tick >= 1);
-        }
+        const ticksInside = fullYTicks.filter(tick => tick >= lowest && tick <= highest);
+        yTicks = ticksInside.length >= 3
+            ? ticksInside
+            : d3.ticks(lowest, highest, 5).filter(tick => tick >= 1);
 
-        redrawEverything();
-    }
-
-    function resetZoom() {
-        x.domain(fullXDomain);
-        y.domain(fullYDomain).range(fullYRange);
-        yTicks = fullYTicks;
-        redrawEverything();
+        redraw();
     }
 
     const brush = d3.brush()
@@ -238,32 +176,39 @@ function createLineChart(container, artists, onSelect) {
             zoomTo(event.selection);
         });
 
-    const brushGroup = chart.insert("g", ".artist-line")
-        .call(brush);
-
-    brushGroup.select(".selection")
+    chart.insert("g", ".artist-line")
+        .call(brush)
+        .select(".selection")
         .attr("fill-opacity", 0.05)
         .attr("stroke", "red")
         .attr("stroke-width", 1.5)
         .attr("stroke-dasharray", "5,3");
 
-    svg.on("dblclick", resetZoom);
+    svg.on("dblclick", function () {
+        x.domain(fullX);
+        y.domain(fullY);
+        yTicks = fullYTicks;
+        redraw();
+    });
 
+    function update(state) {
+        const chosen = new Set(state.artists);
+        const background = chosen.size === 0 ? styles.normal : styles.dimmed;
 
-    function highlight(artistName) {
-        const selectedLines = lines.filter(item => item.artist === artistName);
-        const otherLines = lines.filter(item => item.artist !== artistName);
+        applyStyle(lines.filter(item => !chosen.has(item.artist)), background);
+        applyStyle(lines.filter(item => chosen.has(item.artist)), styles.selected).raise();
 
-        applyStyle(otherLines, lineStyles.dimmed);
-        applyStyle(selectedLines, lineStyles.selected).raise();
+        let text = "";
+        if (state.artists.length === 1) {
+            text = state.artists[0];
+        } else if (state.artists.length > 1) {
+            text = state.artists.length + " artists selected";
+        }
+        label.text(text);
 
-        artistLabel.text(artistName);
+        bandYears = state.years;
+        drawBand();
     }
 
-    function highlightYears(years) {
-        bandYears = years;
-        drawBand(transitionTime);
-    }
-
-    return { highlight: highlight, highlightYears: highlightYears };
+    return { update: update };
 }
