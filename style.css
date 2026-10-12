@@ -1,0 +1,79 @@
+
+* {
+    font-family: "Futura", "Futura PT", "Jost", "Century Gothic", "Trebuchet MS", sans-serif;
+    font-weight: 700;
+}
+
+body {
+    margin: 0;
+    background: #e9e9e9;
+}
+
+.card {
+    width: min(95vw, calc((100vh - 50px) * 1662 / 1048));
+    aspect-ratio: 1662 / 1048;
+    margin: 25px auto;
+    position: relative;
+    container-type: inline-size;
+    background: linear-gradient(to bottom, #e33125 0%, #e33125 50%, white 50%, white 100%);
+}
+
+.top-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+}
+
+.top-area img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.circle {
+    position: absolute;
+    left: 47.68cqw;
+    top: 30.54cqw;
+    width: 3.85cqw;
+    height: 3.85cqw;
+    border: 1.06cqw solid black;
+    border-radius: 50%;
+    background: white;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.bottom-area {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.view-left {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+}
+
+.view-left img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: left center;
+    transform: translate(-1.20cqw, -1.9cqw);
+}
+
+.view-right {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
