@@ -15,10 +15,11 @@ function createArtistPair(container, data) {
 
     function showArtist(artist) {
         const artistCards = cardsByArtist.get(artist);
-        const bestCard = d3.greatest(artistCards, card => +card.Price);
 
         const nameCounts = d3.rollups(artistCards, group => group.length, card => card.name);
         const topName = d3.greatest(nameCounts, entry => entry[1])[0];
+        const commonNameCards = artistCards.filter(card => card.name === topName);
+        const bestCard = d3.greatest(commonNameCards, card => +card.Price);
 
         frame.classed("empty", false).text("");
         frame.append("img")
@@ -31,7 +32,7 @@ function createArtistPair(container, data) {
             });
 
         nameLabel.text(topName);
-        star.style("visibility", bestCard.name === topName ? "visible" : "hidden");
+        star.style("visibility", "visible");
     }
 
     function update(state) {

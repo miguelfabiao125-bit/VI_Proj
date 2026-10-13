@@ -71,6 +71,64 @@ body {
     overflow: hidden;
 }
 
+.line-chart-container {
+    position: relative;
+}
+
+.line-chart-help {
+    position: absolute;
+    left: 0.4cqw;
+    bottom: 45px;
+    z-index: 4;
+}
+
+.line-chart-help-button {
+    width: 2.8cqw;
+    height: 2.8cqw;
+    padding: 0.25cqw;
+    border: 0.15cqw solid black;
+    border-radius: 50%;
+    background: white;
+    cursor: help;
+}
+
+.line-chart-help-button img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.line-chart-help-popover {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 0.6cqw);
+    display: flex;
+    width: 17cqw;
+    padding: 0.7cqw;
+    box-sizing: border-box;
+    flex-direction: column;
+    gap: 0.35cqw;
+    border: 0.12cqw solid rgba(0, 0, 0, 0.45);
+    border-radius: 0.5cqw;
+    background: rgba(255, 255, 255, 0.82);
+    color: #222;
+    font-size: 0.9cqw;
+    line-height: 1.2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+}
+
+.line-chart-help-popover strong {
+    font-size: 1cqw;
+}
+
+.line-chart-help:hover .line-chart-help-popover,
+.line-chart-help:focus-within .line-chart-help-popover {
+    opacity: 1;
+}
+
 .band {
     position: absolute;
     left: 0;

@@ -1,4 +1,6 @@
 function createLineChart(container, data, actions) {
+    container.classList.add("line-chart-container");
+
     const margin = { top: 26, right: 30, bottom: 45, left: 55 };
     const width = container.clientWidth;
     const height = container.clientHeight;
@@ -15,7 +17,22 @@ function createLineChart(container, data, actions) {
 
     const svg = d3.select(container).append("svg")
         .attr("width", width)
-        .attr("height", height);
+        .attr("height", height)
+        .style("touch-action", "none");
+
+    const help = document.createElement("div");
+    help.className = "line-chart-help";
+    help.innerHTML = `
+        <button type="button" class="line-chart-help-button" aria-label="Show line chart zoom instructions">
+            <img src="img/PokeStop.png" alt="">
+        </button>
+        <div class="line-chart-help-popover" role="tooltip">
+            <strong>Zoom in/out in the line chart</strong>
+            <span>Click and drag across the chart to zoom in.</span>
+            <span>Double-click the chart to reset the zoom.</span>
+        </div>
+    `;
+    container.appendChild(help);
 
     svg.append("defs").append("clipPath")
         .attr("id", "line-chart-clip")
