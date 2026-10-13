@@ -1,6 +1,4 @@
 function createArtistPair(container, data) {
-    const cardsByArtist = d3.group(data.cards, card => card.artist);
-
     const pair = d3.select(container).append("div").attr("class", "pair");
     const star = pair.append("span").attr("class", "pair-star").text("★");
     const body = pair.append("div").attr("class", "pair-body");
@@ -14,8 +12,8 @@ function createArtistPair(container, data) {
     }
 
     function showArtist(artist) {
-    const info = data.artistIndex.get(artist);
-    const bestCard = info.favoriteCard;
+    const favorite = data.cache.mostFamousHighestEarningByArtist.get(artist);
+    const bestCard = data.cache.cardsById.get(favorite.cardId);
 
     frame.classed("empty", false).text("");
     frame.append("img")
@@ -27,7 +25,7 @@ function createArtistPair(container, data) {
             frame.text(bestCard.name);
         });
 
-    nameLabel.text(info.topName);
+    nameLabel.text(favorite.name);
     star.style("visibility", "visible");
 }
 

@@ -50,7 +50,8 @@ function createCardGallery(container, data, actions) {
         content.selectAll("*").remove();
 
         const cards = selectedArtists
-            .flatMap(name => data.artistIndex.get(name).cards)
+            .flatMap(name => data.cache.artistCardIdsByArtist.get(name))
+            .map(cardId => data.cache.cardsById.get(cardId))
             .sort((a, b) => a.year - b.year);
 
         if (cards.length === 0) {

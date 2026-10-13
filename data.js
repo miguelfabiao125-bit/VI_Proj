@@ -30,20 +30,36 @@ function artistsByDebut(artistSeries) {
     })).sort((a, b) => a.year - b.year);
 }
 
-function indexByArtist(cards) {
-    const index = new Map();
+function createCardCache(cards) {
+    const cardsById = new Map(cards.map(card => [card.id, card]));
+    const artists = d3.group(cards, card => card.artist);
 
-    d3.group(cards, card => card.artist).forEach(function (artistCards, artist) {
+    const artistCardIds = Array.from(artists, ([artist, artistCards]) => ({
+        artist: artist,
+        cardIds: artistCards.map(card => card.id)
+    }));
+
+    const mostFamousHighestEarningCards = Array.from(artists, ([artist, artistCards]) => {
         const nameCounts = d3.rollups(artistCards, group => group.length, card => card.name);
         const topName = d3.greatest(nameCounts, entry => entry[1])[0];
-        const commonNameCards = artistCards.filter(card => card.name === topName);
+        const topNameCards = artistCards.filter(card => card.name === topName);
+        const card = d3.greatest(topNameCards, card => +card.Price);
 
-        index.set(artist, {
-            cards: artistCards,
-            topName: topName,
-            favoriteCard: d3.greatest(commonNameCards, card => +card.Price)
-        });
+        return {
+            artist: artist,
+            name: topName,
+            cardId: card.id,
+            price: +card.Price
+        };
     });
 
-    return index;
+    return {
+        cardsById: cardsById,
+        artistCardIds: artistCardIds,
+        mostFamousHighestEarningCards: mostFamousHighestEarningCards,
+        artistCardIdsByArtist: new Map(artistCardIds.map(item => [item.artist, item.cardIds])),
+        mostFamousHighestEarningByArtist: new Map(
+            mostFamousHighestEarningCards.map(item => [item.artist, item])
+        )
+    };
 }

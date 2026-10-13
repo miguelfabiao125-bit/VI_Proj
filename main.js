@@ -1,12 +1,13 @@
 async function main() {
     const cards = await loadCards("CPI-32.csv");
+    const cache = createCardCache(cards);
     const artists = cardsPerArtistYear(cards);
 
     const data = {
         cards: cards,
+        cache: cache,
         artists: artists,
         artistGroups: artistsByDebut(artists),
-        artistIndex: indexByArtist(cards),
         yearOfSet: yearsPerSet(cards)
     };
 
