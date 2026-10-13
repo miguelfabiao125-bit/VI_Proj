@@ -12,22 +12,22 @@ function createArtistPair(container, data) {
     }
 
     function showArtist(artist) {
-    const favorite = data.cache.mostFamousHighestEarningByArtist.get(artist);
-    const bestCard = data.cache.cardsById.get(favorite.cardId);
+        const favorite = data.cache.mostFamousHighestEarningByArtist.get(artist);
+        const bestCard = data.cache.cardsById.get(favorite.cardId);
 
-    frame.classed("empty", false).text("");
-    frame.append("img")
-        .attr("src", "Images/" + parseInt(bestCard.ImageID) + "_200w.jpg")
-        .attr("alt", bestCard.name)
-        .attr("title", bestCard.name + " - $" + bestCard.Price)
-        .on("error", function () {
-            d3.select(this).remove();
-            frame.text(bestCard.name);
-        });
+        frame.classed("empty", false).text("");
+        frame.append("img")
+            .attr("src", bestCard.image)
+            .attr("alt", bestCard.name)
+            .attr("title", bestCard.name + " - $" + bestCard.Price)
+            .on("error", function () {
+                d3.select(this).remove();
+                frame.text(bestCard.name);
+            });
 
-    nameLabel.text(favorite.name);
-    star.style("visibility", "visible");
-}
+        nameLabel.text(favorite.name);
+        star.style("visibility", "visible");
+    }
 
     function update(state) {
         const count = state.artists.length;

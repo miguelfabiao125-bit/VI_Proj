@@ -25,6 +25,21 @@ body {
     height: 50%;
 }
 
+.view-artists, .view-pair, .view-gallery, .view-bubble {
+    position: absolute;
+    z-index: 2;
+}
+
+.artist-panel, .gallery-panel, .bubble-panel {
+    box-sizing: border-box;
+    border: 0.25cqw solid black;
+    border-radius: 1.2cqw;
+}
+
+.gallery-panel, .bubble-panel {
+    background: #fdecec;
+}
+
 .circle {
     position: absolute;
     left: 47.68cqw;
@@ -141,22 +156,17 @@ body {
 }
 
 .view-artists {
-    position: absolute;
     left: 1%;
     top: 3%;
     width: 17.6%;
     height: 88%;
-    z-index: 2;
 }
 
 .artist-panel {
     height: 100%;
-    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     background: #ee6a61;
-    border: 0.25cqw solid black;
-    border-radius: 1.2cqw;
     color: white;
     padding: 0.8cqw;
 }
@@ -232,12 +242,10 @@ body {
 .artist-empty { font-size: 1.1cqw; padding: 0.5cqw 0; }
 
 .view-pair {
-    position: absolute;
     left: 19.2%;
     top: 7%;
     width: 13%;
     height: 83%;
-    z-index: 2;
 }
 
 .pair { display: flex; align-items: flex-start; gap: 0.5cqw; }
@@ -273,22 +281,16 @@ body {
 .pair-name { margin-top: 0.6cqw; font-size: 1.3cqw; color: white; text-align: center; }
 
 .view-gallery {
-    position: absolute;
     left: 33.4%;
     top: 3%;
     width: 32%;
     height: 82%;
-    z-index: 2;
 }
 
 .gallery-panel {
     height: 100%;
-    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    background: #fdecec;
-    border: 0.25cqw solid black;
-    border-radius: 1.2cqw;
     padding: 0.8cqw;
 }
 
@@ -384,4 +386,45 @@ body {
     padding: 1cqw 0;
     font-size: 1.3cqw;
     color: #555;
+}
+
+.view-bubble {
+    left: 66.6%;
+    top: 3%;
+    width: 32.4%;
+    height: 82%;
+}
+
+.bubble-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8cqw;
+}
+
+.bubble-header {
+    display: flex;
+    gap: 0.6cqw;
+}
+
+.bubble-button {
+    flex: 1;
+    padding: 0.4cqw 0;
+    border: 0.2cqw solid black;
+    border-radius: 2cqw;
+    background: white;
+    color: #222;
+    font-size: 1cqw;
+    cursor: pointer;
+}
+
+.bubble-button.active {
+    background: #ee6a61;
+    color: white;
+}
+
+.bubble-panel {
+    flex: 1;
+    min-height: 0;
+    padding: 0.5cqw;
 }

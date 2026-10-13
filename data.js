@@ -1,8 +1,20 @@
+function parseList(text) {
+    const items = (text || "").match(/'([^']*)'|"([^"]*)"/g) || [];
+    return items.map(item => item.slice(1, -1)).join(" / ") || "Unknown";
+}
+
 async function loadCards(path) {
     const rows = await d3.csv(path);
 
     return rows
-        .map(row => ({ ...row, year: +row.release_date.slice(-4) }))
+        .map(row => ({
+            ...row,
+            year: +row.release_date.slice(-4),
+            type: parseList(row.types),
+            subtype: parseList(row.subtypes),
+            rarity: row.rarity || "Unknown",
+            image: "Images/" + parseInt(row.ImageID) + "_200w.jpg"
+        }))
         .filter(card => card.artist && !isNaN(card.year));
 }
 
@@ -62,4 +74,23 @@ function createCardCache(cards) {
             mostFamousHighestEarningCards.map(item => [item.artist, item])
         )
     };
+}
+
+
+function selectedCards(data, state, ignoreBubble) {
+    let cards = state.artists.length === 0
+        ? data.cards
+        : state.artists
+            .flatMap(name => data.cache.artistCardIdsByArtist.get(name))
+            .map(id => data.cache.cardsById.get(id));
+
+    if (state.sets.length > 0) {
+        cards = cards.filter(card => state.sets.includes(card.set));
+    }
+
+    if (!ignoreBubble && state.bubble) {
+        cards = cards.filter(card => card[state.bubble.field] === state.bubble.value);
+    }
+
+    return cards;
 }

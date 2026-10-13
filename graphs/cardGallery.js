@@ -5,26 +5,20 @@ function createCardGallery(container, data, actions) {
         { label: "Rarity", field: "rarity" }
     ];
 
-    let current = groupings[1];
-    let selectedArtists = [];
+    let current = groupings[1];         
+    let lastState = { artists: [], years: [], sets: [], bubble: null };
 
     const panel = d3.select(container).append("div").attr("class", "gallery-panel");
     const header = panel.append("div").attr("class", "gallery-header");
 
-    const icon = header.append("svg")
+    header.append("svg")
         .attr("class", "gallery-icon")
-        .attr("viewBox", "0 0 24 24");
-
-    [6, 12, 18].forEach(function (y) {
-        icon.append("line")
-            .attr("x1", 3)
-            .attr("x2", 21)
-            .attr("y1", y)
-            .attr("y2", y)
-            .attr("stroke", "black")
-            .attr("stroke-width", 2.5)
-            .attr("stroke-linecap", "round");
-    });
+        .attr("viewBox", "0 0 24 24")
+        .append("path")
+        .attr("d", "M3 6H21M3 12H21M3 18H21")
+        .attr("stroke", "black")
+        .attr("stroke-width", 2.5)
+        .attr("stroke-linecap", "round");
 
     const buttons = header.selectAll("button")
         .data(groupings)
@@ -35,29 +29,30 @@ function createCardGallery(container, data, actions) {
         .text(grouping => grouping.label)
         .on("click", function (event, grouping) {
             current = grouping;
-            showButtons();
             render();
         });
 
     const scroller = panel.append("div").attr("class", "gallery-scroll");
     const content = scroller.append("div").attr("class", "gallery-content");
 
-    function showButtons() {
-        buttons.classed("active", grouping => grouping === current);
-    }
-
     function render() {
+        buttons.classed("active", grouping => grouping === current);
         content.selectAll("*").remove();
 
-        const cards = selectedArtists
-            .flatMap(name => data.cache.artistCardIdsByArtist.get(name))
-            .map(cardId => data.cache.cardsById.get(cardId))
+        if (lastState.artists.length === 0) {
+            content.append("div")
+                .attr("class", "gallery-empty")
+                .text("Select an artist to see their cards");
+            return;
+        }
+
+        const cards = selectedCards(data, lastState, false)
             .sort((a, b) => a.year - b.year);
 
         if (cards.length === 0) {
             content.append("div")
                 .attr("class", "gallery-empty")
-                .text("Select an artist to see their cards");
+                .text("No cards match the current filters");
             return;
         }
 
@@ -72,7 +67,7 @@ function createCardGallery(container, data, actions) {
             groupCards.forEach(function (card) {
                 grid.append("img")
                     .attr("loading", "lazy")
-                    .attr("src", "Images/" + parseInt(card.ImageID) + "_200w.jpg")
+                    .attr("src", card.image)
                     .attr("alt", card.name)
                     .attr("title", card.name + " - $" + card.Price)
                     .on("error", function () {
@@ -83,11 +78,9 @@ function createCardGallery(container, data, actions) {
     }
 
     function update(state) {
-        selectedArtists = state.artists;
+        lastState = state;
         render();
     }
-
-    showButtons();
 
     return { update: update };
 }
