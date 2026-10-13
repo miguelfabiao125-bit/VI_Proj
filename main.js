@@ -6,6 +6,7 @@ async function main() {
         cards: cards,
         artists: artists,
         artistGroups: artistsByDebut(artists),
+        artistIndex: indexByArtist(cards),
         yearOfSet: yearsPerSet(cards)
     };
 
@@ -62,6 +63,7 @@ async function main() {
     addView("line-chart", createLineChart);
     addView("artist-list", createArtistList);
     addView("artist-pair", createArtistPair);
+    addView("card-gallery", createCardGallery);
 
     window.selectSets = actions.selectSets;
 }

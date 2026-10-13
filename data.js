@@ -29,3 +29,21 @@ function artistsByDebut(artistSeries) {
         artists: items.map(item => item.artist).sort(d3.ascending)
     })).sort((a, b) => a.year - b.year);
 }
+
+function indexByArtist(cards) {
+    const index = new Map();
+
+    d3.group(cards, card => card.artist).forEach(function (artistCards, artist) {
+        const nameCounts = d3.rollups(artistCards, group => group.length, card => card.name);
+        const topName = d3.greatest(nameCounts, entry => entry[1])[0];
+        const commonNameCards = artistCards.filter(card => card.name === topName);
+
+        index.set(artist, {
+            cards: artistCards,
+            topName: topName,
+            favoriteCard: d3.greatest(commonNameCards, card => +card.Price)
+        });
+    });
+
+    return index;
+}

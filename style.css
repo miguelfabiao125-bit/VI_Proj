@@ -271,3 +271,117 @@ body {
 .pair-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 .pair-name { margin-top: 0.6cqw; font-size: 1.3cqw; color: white; text-align: center; }
+
+.view-gallery {
+    position: absolute;
+    left: 33.4%;
+    top: 3%;
+    width: 32%;
+    height: 82%;
+    z-index: 2;
+}
+
+.gallery-panel {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    background: #fdecec;
+    border: 0.25cqw solid black;
+    border-radius: 1.2cqw;
+    padding: 0.8cqw;
+}
+
+.gallery-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8cqw;
+    margin-bottom: 0.6cqw;
+}
+
+.gallery-icon {
+    width: 2.4cqw;
+    height: 2.4cqw;
+    box-sizing: border-box;
+    padding: 0.4cqw;
+    border: 0.2cqw solid black;
+    border-radius: 50%;
+    background: white;
+}
+
+.gallery-button {
+    padding: 0.3cqw 2.2cqw;
+    border: 0.15cqw solid #b5c4d3;
+    border-radius: 2cqw;
+    background: #e3ecf4;
+    color: #333;
+    font-size: 1cqw;
+    cursor: pointer;
+}
+
+.gallery-button.active {
+    background: #ee6a61;
+    border-color: #ee6a61;
+    color: white;
+}
+
+.gallery-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    direction: rtl;
+    scrollbar-width: thin;
+    scrollbar-color: #cfd6dc #eef1f4;
+}
+
+.gallery-scroll::-webkit-scrollbar { width: 0.9cqw; }
+.gallery-scroll::-webkit-scrollbar-track {
+    background: #eef1f4;
+    border-radius: 1cqw;
+}
+.gallery-scroll::-webkit-scrollbar-thumb {
+    background: #cfd6dc;
+    border-radius: 1cqw;
+}
+
+.gallery-content {
+    direction: ltr;
+    padding-left: 0.8cqw;
+}
+
+.gallery-group {
+    display: flex;
+    gap: 1cqw;
+    margin-bottom: 1cqw;
+}
+
+.gallery-group-name {
+    flex: none;
+    width: 6cqw;
+    align-self: flex-start;
+    position: sticky;
+    top: 0.5cqw;
+    text-align: center;
+    font-size: 1.2cqw;
+    color: #222;
+}
+
+.gallery-cards {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8cqw;
+}
+
+.gallery-cards img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 5 / 7;
+    object-fit: contain;
+}
+
+.gallery-empty {
+    padding: 1cqw 0;
+    font-size: 1.3cqw;
+    color: #555;
+}

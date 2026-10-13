@@ -14,26 +14,22 @@ function createArtistPair(container, data) {
     }
 
     function showArtist(artist) {
-        const artistCards = cardsByArtist.get(artist);
+    const info = data.artistIndex.get(artist);
+    const bestCard = info.favoriteCard;
 
-        const nameCounts = d3.rollups(artistCards, group => group.length, card => card.name);
-        const topName = d3.greatest(nameCounts, entry => entry[1])[0];
-        const commonNameCards = artistCards.filter(card => card.name === topName);
-        const bestCard = d3.greatest(commonNameCards, card => +card.Price);
+    frame.classed("empty", false).text("");
+    frame.append("img")
+        .attr("src", "Images/" + parseInt(bestCard.ImageID) + "_200w.jpg")
+        .attr("alt", bestCard.name)
+        .attr("title", bestCard.name + " - $" + bestCard.Price)
+        .on("error", function () {
+            d3.select(this).remove();
+            frame.text(bestCard.name);
+        });
 
-        frame.classed("empty", false).text("");
-        frame.append("img")
-            .attr("src", "Images/" + parseInt(bestCard.ImageID) + "_200w.jpg")
-            .attr("alt", bestCard.name)
-            .attr("title", bestCard.name + " - $" + bestCard.Price)
-            .on("error", function () {
-                d3.select(this).remove();
-                frame.text(bestCard.name);
-            });
-
-        nameLabel.text(topName);
-        star.style("visibility", "visible");
-    }
+    nameLabel.text(info.topName);
+    star.style("visibility", "visible");
+}
 
     function update(state) {
         const count = state.artists.length;
