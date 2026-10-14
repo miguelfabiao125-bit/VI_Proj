@@ -8,7 +8,8 @@ function createBubbleChart(container, data, actions) {
         { label: "SubType",   field: "subtype" }
     ];
     const maxBubbles = 15;
-    const width = 500;
+    // Match the wide panel so the packed bubbles are not scaled down inside it.
+    const width = 560;
     const height = 400;
 
     const typeColors = {
@@ -19,11 +20,31 @@ function createBubbleChart(container, data, actions) {
     const otherColors = d3.scaleOrdinal(d3.schemeTableau10.concat(d3.schemeSet3));
     const colorOf = name => typeColors[name] || otherColors(name);
 
-    const minLabelRadius = 22;   
+    const minLabelRadius = 22;
+    const minBubbleRadius = 32;
+    let smallestDisplayedCount = 1;
+
+    function radiusOf(node) {
+        const countBasedMinimum = minBubbleRadius
+            + Math.log1p(node.data.value / smallestDisplayedCount) * 6;
+        return Math.max(node.r, countBasedMinimum);
+    }
     
     function shorten(name, radius) {
         const max = Math.floor(radius / 3.5);
         return name.length > max ? name.slice(0, max) + "…" : name;
+    }
+
+    function nameLines(name, radius) {
+        if (!name.includes("/")) {
+            return [shorten(name, radius)];
+        }
+
+        const parts = name.split("/");
+        return [
+            shorten(parts[0].trim() + " /", radius),
+            shorten(parts.slice(1).join("/").trim(), radius)
+        ];
     }
 
     let current = fields[1];
@@ -58,13 +79,18 @@ function createBubbleChart(container, data, actions) {
         ].join("##");
 
         if (!bubbleCountsCache.has(key)) {
-            const counts = d3.rollups(
+            const allCounts = d3.rollups(
                     selectedCards(data, state, true),
                     group => group.length,
                     card => card[current.field] || "Unknown"
                 )
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, maxBubbles);
+                .sort((a, b) => b[1] - a[1]);
+
+            const counts = allCounts.length > maxBubbles
+                ? allCounts.slice(0, maxBubbles - 1).concat([
+                    ["Other", d3.sum(allCounts.slice(maxBubbles - 1), ([, value]) => value)]
+                ])
+                : allCounts;
 
             bubbleCountsCache.set(key, counts);
         }
@@ -86,18 +112,61 @@ function createBubbleChart(container, data, actions) {
             return;
         }
 
+        // Adapt the compression to the values currently being displayed. When
+        // counts are similar, keep their proportions close to linear. For a
+        // wide range, lower the exponent so small categories remain visible.
+        const minCount = d3.min(counts, ([, value]) => value);
+        const maxCount = d3.max(counts, ([, value]) => value);
+        smallestDisplayedCount = minCount;
+        const spread = Math.log10(maxCount / Math.max(1, minCount));
+        const layoutExponent = Math.max(0.45, Math.min(1, 1 - Math.max(0, spread - 1) * 0.25));
+
         const root = d3.pack()
             .size([width, height])
-            .padding(6)(
-                d3.hierarchy({ children: counts.map(([name, value]) => ({ name, value })) })
-                    .sum(d => d.value)
+            .padding(2)(
+                d3.hierarchy({
+                    children: counts.map(([name, value]) => ({
+                        name: name,
+                        value: value,
+                        layoutValue: Math.pow(value, layoutExponent)
+                    }))
+                })
+                    .sum(d => d.layoutValue || 0)
             );
+
+        const leaves = root.leaves();
+        const packedMinX = d3.min(leaves, d => d.x - radiusOf(d));
+        const packedMaxX = d3.max(leaves, d => d.x + radiusOf(d));
+        const horizontalScale = Math.min(1.35, (width - 12) / (packedMaxX - packedMinX));
+
+        leaves.forEach(function (node) {
+            node.x = width / 2 + (node.x - width / 2) * horizontalScale;
+        });
+
+        // Reposition using the final visual radius so the minimum-size bubbles
+        // are included in collision detection instead of overlapping/clipping.
+        const simulation = d3.forceSimulation(leaves)
+            .force("x", d3.forceX(width / 2).strength(0.04))
+            .force("y", d3.forceY(height / 2).strength(0.08))
+            .force("charge", d3.forceManyBody().strength(-18))
+            .force("collide", d3.forceCollide(d => radiusOf(d) + 2).iterations(4))
+            .stop();
+
+        for (let tick = 0; tick < 250; tick += 1) {
+            simulation.tick();
+        }
+
+        leaves.forEach(function (node) {
+            const radius = radiusOf(node);
+            node.x = Math.max(radius, Math.min(width - radius, node.x));
+            node.y = Math.max(radius, Math.min(height - radius, node.y));
+        });
 
         const bubble = lastState.bubble;
         const isSelected = d => bubble && bubble.field === current.field && bubble.value === d.data.name;
 
         const nodes = svg.selectAll("g")
-            .data(root.leaves())
+            .data(leaves)
             .enter()
             .append("g")
             .attr("transform", d => `translate(${d.x},${d.y})`)
@@ -108,23 +177,37 @@ function createBubbleChart(container, data, actions) {
         nodes.append("title").text(d => `${d.data.name}: ${d.data.value}`);
 
         nodes.append("circle")
-            .attr("r", d => d.r)
+            .attr("r", radiusOf)
             .attr("fill", d => colorOf(d.data.name))
+            .attr("fill-opacity", 0.78)
             .attr("stroke", "black")
             .attr("stroke-width", d => isSelected(d) ? 4 : 0);
 
-        nodes.filter(d => d.r > minLabelRadius)
+        nodes.filter(d => radiusOf(d) > minLabelRadius)
             .append("text")
             .attr("text-anchor", "middle")
-            .attr("y", d => -d.r * 0.1)
-            .attr("font-size", d => Math.min(d.r / 3, 18))
+            .attr("y", d => d.data.name.includes("/") ? -radiusOf(d) * 0.32 : -radiusOf(d) * 0.1)
+            .attr("font-size", d => Math.min(radiusOf(d) / 3, 18))
             .attr("fill", "#222")
-            .text(d => shorten(d.data.name, d.r));
+            .each(function (d) {
+                const text = d3.select(this);
+                nameLines(d.data.name, radiusOf(d)).forEach(function (line, index) {
+                    text.append("tspan")
+                        .attr("x", 0)
+                        .attr("dy", index === 0 ? 0 : "1.05em")
+                        .text(line);
+                });
+            });
 
         nodes.append("text")
             .attr("text-anchor", "middle")
-            .attr("y", d => d.r > minLabelRadius ? d.r * 0.35 : 4)
-            .attr("font-size", d => Math.min(d.r / 2, 26))
+            .attr("y", d => {
+                if (radiusOf(d) <= minLabelRadius) {
+                    return 4;
+                }
+                return d.data.name.includes("/") ? radiusOf(d) * 0.55 : radiusOf(d) * 0.35;
+            })
+            .attr("font-size", d => Math.min(radiusOf(d) / 2, 26))
             .attr("fill", "#111")
             .text(d => d.data.value);
     }
