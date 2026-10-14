@@ -47,7 +47,7 @@ function createBubbleChart(container, data, actions) {
         ];
     }
 
-    let current = fields[1];
+    let current = fields[0];
     let lastState = { artists: [], years: [], sets: [], bubbles: [] };
 
     const wrapper = d3.select(container).append("div").attr("class", "bubble-wrapper");
@@ -82,19 +82,34 @@ function createBubbleChart(container, data, actions) {
         ].join("##");
 
         if (!bubbleCountsCache.has(key)) {
-            const countState = Object.assign({}, state, { bubbles: otherBubbles });
-            const allCounts = d3.rollups(
-                    selectedCards(data, countState, false),
+            const canUseGlobalCache = state.artists.length === 0
+                && state.sets.length === 0
+                && otherBubbles.length === 0;
+            const allCounts = canUseGlobalCache
+                ? Array.from(
+                    data.cache.cardCountsByFieldValue.get(current.field) || [],
+                    ([value, count]) => [value || "Unknown", count]
+                ).sort((a, b) => b[1] - a[1])
+                : d3.rollups(
+                    selectedCards(
+                        data,
+                        Object.assign({}, state, { bubbles: otherBubbles }),
+                        false
+                    ),
                     group => group.length,
                     card => card[current.field] || "Unknown"
-                )
-                .sort((a, b) => b[1] - a[1]);
+                ).sort((a, b) => b[1] - a[1]);
 
             const counts = allCounts.length > maxBubbles
                 ? allCounts.slice(0, maxBubbles - 1).concat([
                     ["Other", d3.sum(allCounts.slice(maxBubbles - 1), ([, value]) => value)]
                 ])
                 : allCounts;
+
+            const hiddenValues = allCounts.length > maxBubbles
+                ? allCounts.slice(maxBubbles - 1).map(([value]) => value)
+                : [];
+            data.cache.otherBubbleValuesCache.set(key, hiddenValues);
 
             bubbleCountsCache.set(key, counts);
         }

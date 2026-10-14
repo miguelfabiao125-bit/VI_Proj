@@ -3,11 +3,9 @@ function createArtistPair(container, data) {
     const star = pair.append("span").attr("class", "pair-star").text("★");
     const body = pair.append("div").attr("class", "pair-body");
     const frame = body.append("div").attr("class", "pair-frame");
-    const nameLabel = body.append("div").attr("class", "pair-name");
 
     function showMessage(message) {
         frame.classed("empty", true).text(message);
-        nameLabel.text("");
         star.style("visibility", "hidden");
     }
 
@@ -22,10 +20,9 @@ function createArtistPair(container, data) {
             .attr("title", bestCard.name + " - $" + bestCard.Price)
             .on("error", function () {
                 d3.select(this).remove();
-                frame.text(bestCard.name);
+                frame.text("Image unavailable");
             });
 
-        nameLabel.text(favorite.name);
         star.style("visibility", "visible");
     }
 

@@ -16,8 +16,9 @@ function createArtistList(container, data, actions) {
     const content = panel.append("div").attr("class", "artist-scroll")
         .append("div").attr("class", "artist-content");
 
-        const topArea = d3.select(container.parentNode);
+    const topArea = d3.select(container.parentNode);
     topArea.selectAll(".artist-summary").remove();
+    topArea.selectAll(".artist-reset").remove();
 
     const summary = topArea.append("div").attr("class", "artist-summary");
     const totalLabel = summary.append("div").attr("class", "artist-total");
@@ -44,7 +45,7 @@ function createArtistList(container, data, actions) {
             </svg>
         `);
 
-    const resetButton = summary.append("button")
+    const resetButton = topArea.append("button")
         .attr("type", "button")
         .attr("class", "artist-reset")
         .text("Reset list")
@@ -97,10 +98,11 @@ function createArtistList(container, data, actions) {
         }, 0);
 
         totalNumber.text(total);
+        totalRow.style("display", total > 0 ? "flex" : "none");
 
          artistName
             .text(state.artists.length === 1 ? state.artists[0] : "")
-            .style("display", state.artists.length === 1 ? null : "none");
+            .style("visibility", state.artists.length === 1 ? "visible" : "hidden");
 
         resetButton.property("disabled", state.artists.length === 0);
     }

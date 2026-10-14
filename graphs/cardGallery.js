@@ -8,7 +8,10 @@ function createCardGallery(container, data, actions) {
     };
     let lastState = { artists: [], years: [], sets: [], bubbles: [] };
     let renderVersion = 0;
-    const cardsPerBatch = 36;
+    // Keep the first paint small. Images are loaded separately when they are
+    // close to the viewport, so this only controls how many placeholders are
+    // added to the DOM at once.
+    const cardsPerBatch = 18;
     let pendingBatches = [];
 
     const panel = d3.select(container).append("div").attr("class", "gallery-panel");
@@ -28,6 +31,25 @@ function createCardGallery(container, data, actions) {
 
     const scroller = panel.append("div").attr("class", "gallery-scroll");
     const content = scroller.append("div").attr("class", "gallery-content");
+    const imageObserver = "IntersectionObserver" in window
+        ? new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+
+                const image = entry.target;
+                if (image.dataset.src) {
+                    image.src = image.dataset.src;
+                    delete image.dataset.src;
+                }
+                imageObserver.unobserve(image);
+            });
+        }, {
+            root: scroller.node(),
+            rootMargin: "500px 0px"
+        })
+        : null;
 
     function appendCardBatch(batch) {
         if (batch.version !== renderVersion || batch.next >= batch.cards.length) {
@@ -37,27 +59,40 @@ function createCardGallery(container, data, actions) {
         const fragment = document.createDocumentFragment();
         const end = Math.min(batch.next + cardsPerBatch, batch.cards.length);
 
-        batch.cards.slice(batch.next, end).forEach(function (card) {
+        for (let index = batch.next; index < end; index += 1) {
+            const card = batch.cards[index];
             const image = document.createElement("img");
             image.loading = "lazy";
             image.decoding = "async";
-            image.src = card.image;
+            image.dataset.src = card.image;
             image.alt = card.name;
             image.title = card.name + " - $" + card.Price;
             image.addEventListener("error", function () {
                 image.style.visibility = "hidden";
             });
             fragment.appendChild(image);
-        });
+        }
 
         batch.grid.node().appendChild(fragment);
+
+        if (imageObserver) {
+            batch.grid.node().querySelectorAll("img[data-src]").forEach(function (image) {
+                imageObserver.observe(image);
+            });
+        } else {
+            batch.grid.node().querySelectorAll("img[data-src]").forEach(function (image) {
+                image.src = image.dataset.src;
+                delete image.dataset.src;
+            });
+        }
+
         batch.next = end;
     }
 
     function loadVisibleBatches() {
         const scrollElement = scroller.node();
         const viewportBottom = scrollElement.getBoundingClientRect().bottom;
-        const preloadDistance = scrollElement.clientHeight * 1.5;
+        const preloadDistance = scrollElement.clientHeight * 0.75;
 
         pendingBatches.forEach(function (batch) {
             if (batch.version !== renderVersion || batch.next >= batch.cards.length) {
@@ -82,7 +117,19 @@ function createCardGallery(container, data, actions) {
     function queueCardBatch(grid, cards, version) {
         const batch = { grid: grid, cards: cards, next: 0, version: version };
         pendingBatches.push(batch);
-        appendCardBatch(batch);
+    }
+
+    function reserveGridSpace(grid, cards) {
+        const element = grid.node();
+        const columns = 3;
+        const rows = Math.ceil(cards.length / columns);
+        const styles = getComputedStyle(element);
+        const gap = parseFloat(styles.rowGap) || 0;
+        const columnGap = parseFloat(styles.columnGap) || gap;
+        const cardWidth = Math.max(0, (element.clientWidth - columnGap * (columns - 1)) / columns);
+        const cardHeight = cardWidth * 7 / 5;
+
+        element.style.minHeight = `${rows * cardHeight + Math.max(0, rows - 1) * gap}px`;
     }
 
     function clearPendingBatches() {
@@ -96,16 +143,17 @@ function createCardGallery(container, data, actions) {
     }
 
     function queueGroupCards(grid, groupCards, version) {
+        reserveGridSpace(grid, groupCards);
         queueCardBatch(grid, groupCards, version);
-        if (groupCards.length > cardsPerBatch) {
-            loadInitialVisibleBatches();
-        }
     }
 
     function render() {
         renderVersion += 1;
         const version = renderVersion;
         clearPendingBatches();
+        if (imageObserver) {
+            imageObserver.disconnect();
+        }
         const bubbles = lastState.bubbles || [];
         const filters = lastState.artists.map(artist => ({
             key: "artist:" + artist,
@@ -170,6 +218,8 @@ function createCardGallery(container, data, actions) {
 
             queueGroupCards(grid, groupCards, version);
         });
+
+        loadInitialVisibleBatches();
     }
 
     function update(state) {

@@ -1,6 +1,17 @@
+:root {
+    --dashboard-font: "Futura", "Futura PT", "Jost", "Century Gothic", "Trebuchet MS", sans-serif;
+}
+
 * {
-    font-family: "Futura", "Futura PT", "Jost", "Century Gothic", "Trebuchet MS", sans-serif;
+    font-family: var(--dashboard-font);
     font-weight: 700;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
 }
 
 body {
@@ -230,24 +241,37 @@ body {
 
 .view-pair {
     left: 19.2%;
-    top: 8%;
+    top: 12%;
     width: 13%;
     height: 83%;
 }
 
-.pair { display: flex; align-items: flex-start; gap: 0.5cqw; }
+.pair {
+    position: relative;
+    width: 100%;
+}
 
 .pair-star {
+    position: absolute;
+    left: calc(50% - 7cqw);
+    top: 2cqw;
     font-size: 3cqw;
     line-height: 1;
     color: gold;
     visibility: hidden;
 }
 
-.pair-body { display: flex; flex-direction: column; align-items: center; }
+.pair-body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 .pair-frame {
     width: 8.6cqw;
+    margin-top: 2cqw;
+    align-self: center;
     aspect-ratio: 5 / 7;
     box-sizing: border-box;
     display: flex;
@@ -264,8 +288,6 @@ body {
 }
 
 .pair-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
-
-.pair-name { margin-top: 0.6cqw; font-size: 1.15cqw; color: white; text-align: center; }
 
 .view-gallery {
     left: 33.4%;
@@ -382,6 +404,7 @@ body {
     display: flex;
     gap: 1cqw;
     margin-bottom: 1cqw;
+    min-width: 0;
 }
 
 .gallery-group-name {
@@ -398,13 +421,17 @@ body {
 .gallery-cards {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    min-width: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.8cqw;
 }
 
 .gallery-cards img {
     display: block;
+    min-width: 0;
     width: 100%;
+    max-width: 100%;
+    height: auto;
     aspect-ratio: 5 / 7;
     object-fit: contain;
 }
@@ -459,30 +486,34 @@ body {
 .artist-summary {
     position: absolute;
     z-index: 2;
-    left: 26%;
-    width: 13cqw;
-    transform: translateX(-50%);
-    top: 19.3cqw;
+    left: calc(19.2% + 6.5% - 4.3cqw);
+    width: 12cqw;
+    transform: none;
+    top: 17.5cqw;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.9cqw;
     color: white;
-    text-align: center;
+    text-align: left;
 }
 
 .artist-total {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.3cqw;
     line-height: 1.1;
 }
 
 .artist-total-name {
-    max-width: 13cqw;
+    width: 12cqw;
+    max-width: 12cqw;
+    min-height: 0;
     font-size: 1.15cqw;
-    text-align: center;
+    line-height: 1.1;
+    text-align: left;
+    overflow-wrap: anywhere;
 }
 
 .artist-total-row {
@@ -506,12 +537,18 @@ body {
 }
 
 .artist-reset {
-    padding: 0.6cqw 3.2cqw;
-    border: 0.2cqw solid black;
-    border-radius: 2cqw;
+    position: absolute;
+    bottom: 2cqw;
+    left: 25.7%;
+    transform: translateX(-50%);
+    width: max-content;
+    white-space: nowrap;
+    padding: 0.45cqw 2.4cqw;
+    border: 0.18cqw solid black;
+    border-radius: 1.6cqw;
     background: white;
     color: #222;
-    font-size: 1.15cqw;
+    font-size: 1cqw;
     cursor: pointer;
 }
 
