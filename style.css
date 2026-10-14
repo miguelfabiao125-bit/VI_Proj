@@ -428,3 +428,49 @@ body {
     min-height: 0;
     padding: 0.5cqw;
 }
+
+.artist-summary {
+    position: absolute;
+    z-index: 2;
+    /* centrado entre a lista (termina a 18.6%) e a galeria (começa a 33.4%) */
+    left: 26%;
+    width: 13cqw;
+    transform: translateX(-50%);
+    top: 17.5cqw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.9cqw;
+    color: white;
+    text-align: center;
+}
+
+.artist-total {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.artist-total-number { font-size: 2.8cqw; }
+.artist-total-text   { font-size: 1.1cqw; }
+
+.artist-reset {
+    padding: 0.6cqw 3.2cqw;
+    border: 0.2cqw solid black;
+    border-radius: 2cqw;
+    background: white;
+    color: #222;
+    font-size: 1.3cqw;
+    cursor: pointer;
+}
+
+.artist-reset:hover:not(:disabled) {
+    background: #ee6a61;
+    color: white;
+}
+
+.artist-reset:disabled {
+    opacity: 0.5;
+    cursor: default;
+}

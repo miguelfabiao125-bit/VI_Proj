@@ -16,6 +16,17 @@ function createArtistList(container, data, actions) {
     const content = panel.append("div").attr("class", "artist-scroll")
         .append("div").attr("class", "artist-content");
 
+    const topArea = d3.select(container.parentNode);
+    topArea.selectAll(".artist-summary").remove();
+
+    const summary = topArea.append("div").attr("class", "artist-summary");
+    const totalLabel = summary.append("div").attr("class", "artist-total");
+    const resetButton = summary.append("button")
+        .attr("type", "button")
+        .attr("class", "artist-reset")
+        .text("Reset list")
+        .on("click", () => actions.clearArtists());
+
     function render() {
         content.selectAll("*").remove();
         let counter = 0;
@@ -53,9 +64,22 @@ function createArtistList(container, data, actions) {
         render();
     });
 
-    function update(state) {
+        function update(state) {
         selected = new Set(state.artists);
         content.selectAll("input").property("checked", artist => selected.has(artist));
+
+        const total = state.artists.reduce(function (sum, artist) {
+            const ids = data.cache.artistCardIdsByArtist.get(artist);
+            return sum + (ids ? ids.length : 0);
+        }, 0);
+
+        totalLabel.html(
+            "<span class='artist-total-number'>" + total + "</span>" +
+            "<span class='artist-total-text'>cards by " +
+            (state.artists.length === 1 ? "this artist" : "selected artists") + "</span>"
+        );
+
+        resetButton.property("disabled", state.artists.length === 0);
     }
 
     render();

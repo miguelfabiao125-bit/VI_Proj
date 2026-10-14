@@ -33,7 +33,12 @@ async function main() {
             const same = state.bubble && state.bubble.field === field && state.bubble.value === value;
             state.bubble = (value === null || same) ? null : { field: field, value: value };
             updateViews();
-        }
+        },
+
+        clearArtists: function () {
+            state.artists = [];
+            updateViews();
+},
     };
 
     function updateViews() {
