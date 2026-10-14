@@ -8,7 +8,6 @@ function createBubbleChart(container, data, actions) {
         { label: "SubType",   field: "subtype" }
     ];
     const maxBubbles = 15;
-    // Match the wide panel so the packed bubbles are not scaled down inside it.
     const width = 560;
     const height = 400;
 
@@ -131,9 +130,6 @@ function createBubbleChart(container, data, actions) {
             return;
         }
 
-        // Adapt the compression to the values currently being displayed. When
-        // counts are similar, keep their proportions close to linear. For a
-        // wide range, lower the exponent so small categories remain visible.
         const minCount = d3.min(counts, ([, value]) => value);
         const maxCount = d3.max(counts, ([, value]) => value);
         smallestDisplayedCount = minCount;
@@ -162,9 +158,7 @@ function createBubbleChart(container, data, actions) {
             node.x = width / 2 + (node.x - width / 2) * horizontalScale;
         });
 
-        // Reposition using the final visual radius so the minimum-size bubbles
-        // are included in collision detection instead of overlapping/clipping.
-        const simulation = d3.forceSimulation(leaves)
+         const simulation = d3.forceSimulation(leaves)
             .force("x", d3.forceX(width / 2).strength(0.04))
             .force("y", d3.forceY(height / 2).strength(0.08))
             .force("charge", d3.forceManyBody().strength(-18))

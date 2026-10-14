@@ -104,8 +104,6 @@ function createArtistList(container, data, actions) {
             .text(state.artists.length === 1 ? state.artists[0] : "")
             .style("visibility", state.artists.length === 1 ? "visible" : "hidden");
 
-        // Keep the control clickable in every state. Clearing an already
-        // empty filter set is a harmless no-op and avoids a disabled overlay.
         resetButton.property("disabled", false);
     }
 

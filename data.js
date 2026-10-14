@@ -179,9 +179,7 @@ function selectedCards(data, state, ignoreBubble) {
         return cachedSelection;
     }
 
-    // This is the most common gallery path. Return the already grouped cards
-    // directly instead of creating an ID Set and looking every card up again.
-    if (!ignoreBubble
+     if (!ignoreBubble
         && state.artists.length === 1
         && state.sets.length === 0
         && bubbles.length === 0) {
@@ -287,9 +285,7 @@ function selectedCards(data, state, ignoreBubble) {
     const result = Array.from(selectedIds, id => data.cache.cardsById.get(id));
     data.cache.selectedCardsCache.set(cacheKey, result);
 
-    // Keep this cache bounded because every distinct combination creates a
-    // result array, and filter combinations can grow during a session.
-    if (data.cache.selectedCardsCache.size > 128) {
+     if (data.cache.selectedCardsCache.size > 128) {
         data.cache.selectedCardsCache.delete(data.cache.selectedCardsCache.keys().next().value);
     }
 

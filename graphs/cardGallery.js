@@ -8,7 +8,6 @@ function createCardGallery(container, data, actions) {
     };
     let lastState = { artists: [], years: [], sets: [], bubbles: [] };
     let renderVersion = 0;
-    // Keep the first paint small while loading one set at a time.
     const cardsPerBatch = 18;
     const maxConcurrentImages = 6;
     let pendingBatches = [];
@@ -34,13 +33,23 @@ function createCardGallery(container, data, actions) {
     const scroller = panel.append("div").attr("class", "gallery-scroll");
     const content = scroller.append("div").attr("class", "gallery-content");
 
+    const lazyObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+        const item = entry.target._lazy;
+        if (!item) return;
+        item.visible = entry.isIntersecting;
+        if (entry.isIntersecting && !item.queued && item.version === renderVersion) {
+            item.queued = true;
+            queueImage(item.image, item.url, item.version, 0, item);
+        }
+    });
+}, { root: scroller.node(), rootMargin: "300px 0px" });
+
     function pumpImageQueue() {
         while (activeImageLoads < maxConcurrentImages && imageQueue.length > 0) {
-            const item = imageQueue.shift();
+           const item = imageQueue.pop();
 
-            if (item.version !== renderVersion || !item.image.isConnected) {
-                continue;
-            }
+            if (item.lazy && !item.lazy.visible) { item.lazy.queued = false; continue; }
 
             activeImageLoads += 1;
             let finished = false;
@@ -76,7 +85,6 @@ function createCardGallery(container, data, actions) {
             item.image.addEventListener("error", retry, { once: true });
             item.image.src = item.url;
 
-            // Cached files can complete before the normal event cycle.
             if (item.image.complete) {
                 window.setTimeout(finish, 0);
             }
@@ -94,6 +102,7 @@ function createCardGallery(container, data, actions) {
     }
 
     function cancelImageLoads() {
+        lazyObserver.disconnect();
         imageQueue = [];
         Array.from(activeImageFinishes).forEach(function (finish) {
             finish();
@@ -117,9 +126,6 @@ function createCardGallery(container, data, actions) {
         for (let index = batch.next; index < end; index += 1) {
             const card = batch.cards[index];
             const image = document.createElement("img");
-            // Batches are added only when their group is close to the
-            // viewport, so load the complete batch immediately. This avoids
-            // images waiting for a scroll event after a filter change.
             image.loading = "eager";
             image.decoding = "async";
             image.alt = card.name;
@@ -130,18 +136,19 @@ function createCardGallery(container, data, actions) {
 
         batch.grid.node().appendChild(fragment);
 
+       // images.forEach(function (item) {
+         //   queueImage(item.image, item.url, batch.version);
+        //});
         images.forEach(function (item) {
-            queueImage(item.image, item.url, batch.version);
+        item.image._lazy = { image: item.image, url: item.url, version: batch.version };
+        lazyObserver.observe(item.image);
         });
 
         batch.next = end;
     }
 
     function scheduleBackgroundBatch(version) {
-        // requestIdleCallback can be postponed for seconds while the other
-        // dashboard graphs are active. A zero-delay task starts small galleries
-        // immediately while still yielding between batches.
-        const schedule = function (callback) {
+       const schedule = function (callback) {
             window.setTimeout(callback, 0);
         };
 
@@ -150,9 +157,6 @@ function createCardGallery(container, data, actions) {
                 return;
             }
 
-            // Finish one set's batches before starting the next set. This
-            // prevents cards from later sets from competing with the current
-            // set's image requests.
             const batch = pendingBatches[0];
             if (batch && batch.version === version) {
                 appendCardBatch(batch);
@@ -269,7 +273,6 @@ function createCardGallery(container, data, actions) {
         });
 
         if (cards.length <= cardsPerBatch) {
-            // Small selections should never wait for a background task.
             pendingBatches.slice().forEach(function (batch) {
                 appendCardBatch(batch);
             });
