@@ -82,6 +82,8 @@ async function main() {
             view.chart.update(state);
         }
 
+        view.redraw = draw;
+
         new ResizeObserver(function () {
             cancelAnimationFrame(frame);
             frame = requestAnimationFrame(draw);
@@ -95,6 +97,17 @@ async function main() {
     addView("artist-pair", createArtistPair);
     addView("card-gallery", createCardGallery);
     addView("bubble-chart", createBubbleChart);
+
+    let windowResizeFrame;
+    function redrawAfterViewportChange() {
+        cancelAnimationFrame(windowResizeFrame);
+        windowResizeFrame = requestAnimationFrame(function () {
+            views.forEach(view => view.redraw());
+        });
+    }
+
+    window.addEventListener("resize", redrawAfterViewportChange);
+    document.addEventListener("fullscreenchange", redrawAfterViewportChange);
 
     window.selectSets = actions.selectSets; 
 }
