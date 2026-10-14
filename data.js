@@ -88,8 +88,11 @@ function selectedCards(data, state, ignoreBubble) {
         cards = cards.filter(card => state.sets.includes(card.set));
     }
 
-    if (!ignoreBubble && state.bubble) {
-        cards = cards.filter(card => card[state.bubble.field] === state.bubble.value);
+    const bubbles = state.bubbles || (state.bubble ? [state.bubble] : []);
+    if (!ignoreBubble && bubbles.length > 0) {
+        cards = bubbles.reduce(function (filteredCards, bubble) {
+            return filteredCards.filter(card => card[bubble.field] === bubble.value);
+        }, cards);
     }
 
     return cards;
