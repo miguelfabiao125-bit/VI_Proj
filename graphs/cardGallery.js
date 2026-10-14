@@ -1,12 +1,12 @@
 function createCardGallery(container, data, actions) {
-    const groupings = [
-        { label: "Artist", field: "artist" },
-        { label: "Series", field: "series" },
-        { label: "Rarity", field: "rarity" }
-    ];
-
-    let current = groupings[1];         
-    let lastState = { artists: [], years: [], sets: [], bubble: null };
+    const seriesGrouping = { label: "Series", field: "series" };
+    const bubbleLabels = {
+        name: "Card Name",
+        rarity: "Rarity",
+        type: "Type",
+        subtype: "SubType"
+    };
+    let lastState = { artists: [], years: [], sets: [], bubbles: [] };
     let renderVersion = 0;
     const cardsPerBatch = 36;
     let pendingBatches = [];
@@ -23,17 +23,8 @@ function createCardGallery(container, data, actions) {
         .attr("stroke-width", 2.5)
         .attr("stroke-linecap", "round");
 
-    const buttons = header.selectAll("button")
-        .data(groupings)
-        .enter()
-        .append("button")
-        .attr("type", "button")
-        .attr("class", "gallery-button")
-        .text(grouping => grouping.label)
-        .on("click", function (event, grouping) {
-            current = grouping;
-            render();
-        });
+    const filterBubbles = header.append("div")
+        .attr("class", "gallery-filter-bubbles");
 
     const scroller = panel.append("div").attr("class", "gallery-scroll");
     const content = scroller.append("div").attr("class", "gallery-content");
@@ -115,13 +106,47 @@ function createCardGallery(container, data, actions) {
         renderVersion += 1;
         const version = renderVersion;
         clearPendingBatches();
-        buttons.classed("active", grouping => grouping === current);
+        const bubbles = lastState.bubbles || [];
+        const filters = lastState.artists.map(artist => ({
+            key: "artist:" + artist,
+            label: artist,
+            field: "artist",
+            value: artist
+        })).concat(bubbles.map(bubble => ({
+            key: bubble.field + ":" + bubble.value,
+            label: bubbleLabels[bubble.field] + ": " + bubble.value,
+            field: bubble.field,
+            value: bubble.value
+        })));
+
+        filterBubbles.selectAll("button")
+            .data(filters, filter => filter.key)
+            .join(
+                enter => enter.append("button")
+                    .attr("type", "button")
+                    .attr("class", "gallery-filter-bubble")
+                    .on("click", function (event, filter) {
+                        if (filter.field === "artist") {
+                            actions.toggleArtist(filter.value);
+                        } else {
+                            actions.clearBubble(filter.field, filter.value);
+                        }
+                    }),
+                update => update,
+                exit => exit.remove()
+            )
+            .text(filter => filter.label);
+
         content.selectAll("*").remove();
 
-        if (lastState.artists.length === 0) {
+        const hasSelectedFilter = lastState.artists.length > 0
+            || lastState.sets.length > 0
+            || bubbles.length > 0;
+
+        if (!hasSelectedFilter) {
             content.append("div")
                 .attr("class", "gallery-empty")
-                .text("Select an artist to see their cards");
+                .text("Select an artist or filter to see cards");
             return;
         }
 
@@ -135,7 +160,7 @@ function createCardGallery(container, data, actions) {
             return;
         }
 
-        const groups = d3.group(cards, card => card[current.field] || "Unknown");
+        const groups = d3.group(cards, card => card[seriesGrouping.field] || "Unknown");
 
         groups.forEach(function (groupCards, name) {
             const group = content.append("div").attr("class", "gallery-group");

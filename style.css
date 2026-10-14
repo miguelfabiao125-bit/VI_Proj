@@ -230,7 +230,7 @@ body {
 
 .view-pair {
     left: 19.2%;
-    top: 16%;
+    top: 8%;
     width: 13%;
     height: 83%;
 }
@@ -312,6 +312,46 @@ body {
     background: #ee6a61;
     border-color: #ee6a61;
     color: white;
+}
+
+.gallery-filter-bubbles {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 0.35cqw;
+    padding-bottom: 0.2cqw;
+    scrollbar-width: thin;
+    scrollbar-color: #cfd6dc transparent;
+}
+
+.gallery-filter-bubbles::-webkit-scrollbar {
+    height: 0.45cqw;
+}
+
+.gallery-filter-bubbles::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.gallery-filter-bubbles::-webkit-scrollbar-thumb {
+    background: #cfd6dc;
+    border-radius: 1cqw;
+}
+
+.gallery-filter-bubble {
+    flex: none;
+    max-width: 18cqw;
+    padding: 0.25cqw 0.7cqw;
+    border: 0.12cqw solid #6d8ba5;
+    border-radius: 1.5cqw;
+    background: #dceaf4;
+    color: #263746;
+    font-size: 0.72cqw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
 }
 
 .gallery-scroll {

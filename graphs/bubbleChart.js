@@ -48,7 +48,7 @@ function createBubbleChart(container, data, actions) {
     }
 
     let current = fields[1];
-    let lastState = { artists: [], years: [], sets: [], bubble: null };
+    let lastState = { artists: [], years: [], sets: [], bubbles: [] };
 
     const wrapper = d3.select(container).append("div").attr("class", "bubble-wrapper");
     const header = wrapper.append("div").attr("class", "bubble-header");
@@ -62,7 +62,7 @@ function createBubbleChart(container, data, actions) {
         .text(item => item.label)
         .on("click", function (event, item) {
             current = item;
-            actions.selectBubble(null, null); 
+            render();
         });
 
     const panel = wrapper.append("div").attr("class", "bubble-panel");
@@ -72,15 +72,19 @@ function createBubbleChart(container, data, actions) {
         .attr("height", "100%");
 
     function countsFor(state) {
+        const activeBubbles = state.bubbles || [];
+        const otherBubbles = activeBubbles.filter(bubble => bubble.field !== current.field);
         const key = [
             current.field,
             state.artists.slice().sort().join("|"),
-            state.sets.slice().sort().join("|")
+            state.sets.slice().sort().join("|"),
+            otherBubbles.map(bubble => bubble.field + "=" + bubble.value).sort().join("|")
         ].join("##");
 
         if (!bubbleCountsCache.has(key)) {
+            const countState = Object.assign({}, state, { bubbles: otherBubbles });
             const allCounts = d3.rollups(
-                    selectedCards(data, state, true),
+                    selectedCards(data, countState, false),
                     group => group.length,
                     card => card[current.field] || "Unknown"
                 )
@@ -162,8 +166,10 @@ function createBubbleChart(container, data, actions) {
             node.y = Math.max(radius, Math.min(height - radius, node.y));
         });
 
-        const bubble = lastState.bubble;
-        const isSelected = d => bubble && bubble.field === current.field && bubble.value === d.data.name;
+        const activeBubbles = lastState.bubbles || [];
+        const isSelected = d => activeBubbles.some(
+            bubble => bubble.field === current.field && bubble.value === d.data.name
+        );
 
         const nodes = svg.selectAll("g")
             .data(leaves)
@@ -171,7 +177,7 @@ function createBubbleChart(container, data, actions) {
             .append("g")
             .attr("transform", d => `translate(${d.x},${d.y})`)
             .style("cursor", "pointer")
-            .attr("opacity", d => (!bubble || isSelected(d)) ? 1 : 0.4)
+            .attr("opacity", d => (activeBubbles.length === 0 || isSelected(d)) ? 1 : 0.4)
             .on("click", (event, d) => actions.selectBubble(current.field, d.data.name));
 
         nodes.append("title").text(d => `${d.data.name}: ${d.data.value}`);
@@ -214,8 +220,9 @@ function createBubbleChart(container, data, actions) {
 
     function update(state) {
         lastState = state;
-        if (state.bubble) {
-            current = fields.find(item => item.field === state.bubble.field) || current;
+        const activeBubble = (state.bubbles || []).find(bubble => bubble.field === current.field);
+        if (activeBubble) {
+            current = fields.find(item => item.field === activeBubble.field) || current;
         }
         render();
     }

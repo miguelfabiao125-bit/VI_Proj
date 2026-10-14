@@ -10,7 +10,7 @@ async function main() {
         yearOfSet: yearsPerSet(cards)
     };
 
-    const state = { artists: [], years: [], sets: [], bubble: null };
+    const state = { artists: [], years: [], sets: [], bubbles: [] };
     const views = [];
 
      const actions = {
@@ -30,8 +30,24 @@ async function main() {
         },
 
         selectBubble: function (field, value) {
-            const same = state.bubble && state.bubble.field === field && state.bubble.value === value;
-            state.bubble = (value === null || same) ? null : { field: field, value: value };
+            if (field === null || value === null) {
+                state.bubbles = [];
+            } else {
+                const same = state.bubbles.some(
+                    bubble => bubble.field === field && bubble.value === value
+                );
+                state.bubbles = state.bubbles.filter(bubble => bubble.field !== field);
+                if (!same) {
+                    state.bubbles.push({ field: field, value: value });
+                }
+            }
+            updateViews();
+        },
+
+        clearBubble: function (field, value) {
+            state.bubbles = state.bubbles.filter(
+                bubble => bubble.field !== field || bubble.value !== value
+            );
             updateViews();
         },
 
