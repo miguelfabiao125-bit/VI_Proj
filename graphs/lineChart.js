@@ -70,7 +70,7 @@ function createLineChart(container, data, actions) {
             .text(text);
     }
 
-    addText("Pokémon Cards Produced per Artist over Time", chartWidth / 2, -10);
+    addText("Pokémon Cards Produced per Artist over Time", chartWidth / 2, -10).attr("class", "line-chart-title");
     addText("Year", chartWidth / 2, chartHeight + 38);
     addText("Number of Cards", -chartHeight / 2, -40).attr("transform", "rotate(-90)");
 
@@ -150,7 +150,8 @@ function createLineChart(container, data, actions) {
 
     applyStyle(lines, styles.normal);
 
-    const label = addText("", chartWidth - 10, 8)
+        const label = addText("", chartWidth - 10, 8)
+        .attr("class", "line-chart-label")
         .attr("text-anchor", "end")
         .attr("fill", "red")
         .style("pointer-events", "none");

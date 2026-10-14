@@ -561,3 +561,6 @@ body {
     opacity: 0.5;
     cursor: default;
 }
+
+.line-chart-title { font-size: 1.25cqw; }
+.line-chart-label { font-size: 1.15cqw; }
