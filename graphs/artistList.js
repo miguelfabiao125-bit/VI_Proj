@@ -16,11 +16,34 @@ function createArtistList(container, data, actions) {
     const content = panel.append("div").attr("class", "artist-scroll")
         .append("div").attr("class", "artist-content");
 
-    const topArea = d3.select(container.parentNode);
+        const topArea = d3.select(container.parentNode);
     topArea.selectAll(".artist-summary").remove();
 
     const summary = topArea.append("div").attr("class", "artist-summary");
     const totalLabel = summary.append("div").attr("class", "artist-total");
+
+    const artistName = totalLabel.append("div").attr("class", "artist-total-name");
+    const totalRow = totalLabel.append("div").attr("class", "artist-total-row");
+    const totalNumber = totalRow.append("span").attr("class", "artist-total-number");
+
+    totalRow.append("span")
+        .attr("class", "artist-total-icon")
+        .attr("title", "Cards by the selected artists")
+        .html(`
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"
+                 stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+                <mask id="artist-total-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
+                    <rect width="32" height="32" fill="white"/>
+                    <rect x="11" y="6" width="16" height="22" rx="2.5" fill="black" stroke="black" stroke-width="3.5"/>
+                </mask>
+                <g mask="url(#artist-total-mask)">
+                    <rect x="4" y="6" width="16" height="22" rx="2.5" transform="rotate(-14 12 17)"/>
+                </g>
+                <rect x="11" y="6" width="16" height="22" rx="2.5"/>
+                <path d="M19 12 L23 17 L19 22 L15 17 Z"/>
+            </svg>
+        `);
+
     const resetButton = summary.append("button")
         .attr("type", "button")
         .attr("class", "artist-reset")
@@ -64,7 +87,7 @@ function createArtistList(container, data, actions) {
         render();
     });
 
-        function update(state) {
+            function update(state) {
         selected = new Set(state.artists);
         content.selectAll("input").property("checked", artist => selected.has(artist));
 
@@ -73,11 +96,11 @@ function createArtistList(container, data, actions) {
             return sum + (ids ? ids.length : 0);
         }, 0);
 
-        totalLabel.html(
-            "<span class='artist-total-number'>" + total + "</span>" +
-            "<span class='artist-total-text'>cards by " +
-            (state.artists.length === 1 ? "this artist" : "selected artists") + "</span>"
-        );
+        totalNumber.text(total);
+
+         artistName
+            .text(state.artists.length === 1 ? state.artists[0] : "")
+            .style("display", state.artists.length === 1 ? null : "none");
 
         resetButton.property("disabled", state.artists.length === 0);
     }
