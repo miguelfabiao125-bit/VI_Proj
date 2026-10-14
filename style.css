@@ -432,7 +432,6 @@ body {
 .artist-summary {
     position: absolute;
     z-index: 2;
-    /* centrado entre a lista (termina a 18.6%) e a galeria (começa a 33.4%) */
     left: 26%;
     width: 13cqw;
     transform: translateX(-50%);
