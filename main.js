@@ -54,7 +54,15 @@ async function main() {
         clearArtists: function () {
             state.artists = [];
             updateViews();
-},
+        },
+
+        clearFilters: function () {
+            state.artists = [];
+            state.years = [];
+            state.sets = [];
+            state.bubbles = [];
+            updateViews();
+        },
     };
 
     function updateViews() {

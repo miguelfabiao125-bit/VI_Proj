@@ -48,8 +48,8 @@ function createArtistList(container, data, actions) {
     const resetButton = topArea.append("button")
         .attr("type", "button")
         .attr("class", "artist-reset")
-        .text("Reset list")
-        .on("click", () => actions.clearArtists());
+        .text("Reset Filters")
+        .on("click", () => actions.clearFilters());
 
     function render() {
         content.selectAll("*").remove();
@@ -104,7 +104,9 @@ function createArtistList(container, data, actions) {
             .text(state.artists.length === 1 ? state.artists[0] : "")
             .style("visibility", state.artists.length === 1 ? "visible" : "hidden");
 
-        resetButton.property("disabled", state.artists.length === 0);
+        // Keep the control clickable in every state. Clearing an already
+        // empty filter set is a harmless no-op and avoids a disabled overlay.
+        resetButton.property("disabled", false);
     }
 
     render();

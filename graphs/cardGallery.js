@@ -1,5 +1,5 @@
 function createCardGallery(container, data, actions) {
-    const seriesGrouping = { label: "Series", field: "series" };
+    const setGrouping = { label: "Set", field: "set" };
     const bubbleLabels = {
         name: "Card Name",
         rarity: "Rarity",
@@ -8,11 +8,13 @@ function createCardGallery(container, data, actions) {
     };
     let lastState = { artists: [], years: [], sets: [], bubbles: [] };
     let renderVersion = 0;
-    // Keep the first paint small. Images are loaded separately when they are
-    // close to the viewport, so this only controls how many placeholders are
-    // added to the DOM at once.
+    // Keep the first paint small while loading one set at a time.
     const cardsPerBatch = 18;
+    const maxConcurrentImages = 6;
     let pendingBatches = [];
+    let imageQueue = [];
+    let activeImageLoads = 0;
+    const activeImageFinishes = new Set();
 
     const panel = d3.select(container).append("div").attr("class", "gallery-panel");
     const header = panel.append("div").attr("class", "gallery-header");
@@ -31,25 +33,77 @@ function createCardGallery(container, data, actions) {
 
     const scroller = panel.append("div").attr("class", "gallery-scroll");
     const content = scroller.append("div").attr("class", "gallery-content");
-    const imageObserver = "IntersectionObserver" in window
-        ? new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (!entry.isIntersecting) {
+
+    function pumpImageQueue() {
+        while (activeImageLoads < maxConcurrentImages && imageQueue.length > 0) {
+            const item = imageQueue.shift();
+
+            if (item.version !== renderVersion || !item.image.isConnected) {
+                continue;
+            }
+
+            activeImageLoads += 1;
+            let finished = false;
+            const finish = function () {
+                if (finished) {
+                    return;
+                }
+                finished = true;
+                activeImageFinishes.delete(finish);
+                activeImageLoads -= 1;
+                pumpImageQueue();
+            };
+            const retry = function () {
+                if (item.version !== renderVersion || !item.image.isConnected) {
+                    finish();
                     return;
                 }
 
-                const image = entry.target;
-                if (image.dataset.src) {
-                    image.src = image.dataset.src;
-                    delete image.dataset.src;
+                finish();
+                if (item.attempt >= 3) {
+                    item.image.style.visibility = "hidden";
+                    return;
                 }
-                imageObserver.unobserve(image);
-            });
-        }, {
-            root: scroller.node(),
-            rootMargin: "500px 0px"
-        })
-        : null;
+
+                item.image.removeAttribute("src");
+                window.setTimeout(function () {
+                    queueImage(item.image, item.url, item.version, item.attempt + 1);
+                }, 100 * (item.attempt + 1));
+            };
+
+            activeImageFinishes.add(finish);
+            item.image.addEventListener("load", finish, { once: true });
+            item.image.addEventListener("error", retry, { once: true });
+            item.image.src = item.url;
+
+            // Cached files can complete before the normal event cycle.
+            if (item.image.complete) {
+                window.setTimeout(finish, 0);
+            }
+        }
+    }
+
+    function queueImage(image, url, version, attempt) {
+        imageQueue.push({
+            image: image,
+            url: url,
+            version: version,
+            attempt: attempt || 0
+        });
+        pumpImageQueue();
+    }
+
+    function cancelImageLoads() {
+        imageQueue = [];
+        Array.from(activeImageFinishes).forEach(function (finish) {
+            finish();
+        });
+        content.selectAll("img").each(function () {
+            this.onload = null;
+            this.onerror = null;
+            this.src = "";
+        });
+    }
 
     function appendCardBatch(batch) {
         if (batch.version !== renderVersion || batch.next >= batch.cards.length) {
@@ -57,62 +111,65 @@ function createCardGallery(container, data, actions) {
         }
 
         const fragment = document.createDocumentFragment();
+        const images = [];
         const end = Math.min(batch.next + cardsPerBatch, batch.cards.length);
 
         for (let index = batch.next; index < end; index += 1) {
             const card = batch.cards[index];
             const image = document.createElement("img");
-            image.loading = "lazy";
+            // Batches are added only when their group is close to the
+            // viewport, so load the complete batch immediately. This avoids
+            // images waiting for a scroll event after a filter change.
+            image.loading = "eager";
             image.decoding = "async";
-            image.dataset.src = card.image;
             image.alt = card.name;
             image.title = card.name + " - $" + card.Price;
-            image.addEventListener("error", function () {
-                image.style.visibility = "hidden";
-            });
             fragment.appendChild(image);
+            images.push({ image: image, url: card.image });
         }
 
         batch.grid.node().appendChild(fragment);
 
-        if (imageObserver) {
-            batch.grid.node().querySelectorAll("img[data-src]").forEach(function (image) {
-                imageObserver.observe(image);
-            });
-        } else {
-            batch.grid.node().querySelectorAll("img[data-src]").forEach(function (image) {
-                image.src = image.dataset.src;
-                delete image.dataset.src;
-            });
-        }
+        images.forEach(function (item) {
+            queueImage(item.image, item.url, batch.version);
+        });
 
         batch.next = end;
     }
 
-    function loadVisibleBatches() {
-        const scrollElement = scroller.node();
-        const viewportBottom = scrollElement.getBoundingClientRect().bottom;
-        const preloadDistance = scrollElement.clientHeight * 0.75;
+    function scheduleBackgroundBatch(version) {
+        // requestIdleCallback can be postponed for seconds while the other
+        // dashboard graphs are active. A zero-delay task starts small galleries
+        // immediately while still yielding between batches.
+        const schedule = function (callback) {
+            window.setTimeout(callback, 0);
+        };
 
-        pendingBatches.forEach(function (batch) {
-            if (batch.version !== renderVersion || batch.next >= batch.cards.length) {
+        schedule(function () {
+            if (version !== renderVersion) {
                 return;
             }
 
-            const gridTop = batch.grid.node().getBoundingClientRect().top;
-            if (gridTop < viewportBottom + preloadDistance) {
+            // Finish one set's batches before starting the next set. This
+            // prevents cards from later sets from competing with the current
+            // set's image requests.
+            const batch = pendingBatches[0];
+            if (batch && batch.version === version) {
                 appendCardBatch(batch);
+                if (batch.next >= batch.cards.length) {
+                    pendingBatches.shift();
+                }
+            }
+
+            pendingBatches = pendingBatches.filter(function (item) {
+                return item.version === version && item.next < item.cards.length;
+            });
+
+            if (pendingBatches.length > 0) {
+                scheduleBackgroundBatch(version);
             }
         });
-
-        pendingBatches = pendingBatches.filter(function (batch) {
-            return batch.version === renderVersion && batch.next < batch.cards.length;
-        });
     }
-
-    scroller.on("scroll.gallery", function () {
-        requestAnimationFrame(loadVisibleBatches);
-    });
 
     function queueCardBatch(grid, cards, version) {
         const batch = { grid: grid, cards: cards, next: 0, version: version };
@@ -136,12 +193,6 @@ function createCardGallery(container, data, actions) {
         pendingBatches = [];
     }
 
-    function loadInitialVisibleBatches() {
-        requestAnimationFrame(function () {
-            loadVisibleBatches();
-        });
-    }
-
     function queueGroupCards(grid, groupCards, version) {
         reserveGridSpace(grid, groupCards);
         queueCardBatch(grid, groupCards, version);
@@ -151,9 +202,7 @@ function createCardGallery(container, data, actions) {
         renderVersion += 1;
         const version = renderVersion;
         clearPendingBatches();
-        if (imageObserver) {
-            imageObserver.disconnect();
-        }
+        cancelImageLoads();
         const bubbles = lastState.bubbles || [];
         const filters = lastState.artists.map(artist => ({
             key: "artist:" + artist,
@@ -208,7 +257,7 @@ function createCardGallery(container, data, actions) {
             return;
         }
 
-        const groups = d3.group(cards, card => card[seriesGrouping.field] || "Unknown");
+        const groups = d3.group(cards, card => card[setGrouping.field] || "Unknown");
 
         groups.forEach(function (groupCards, name) {
             const group = content.append("div").attr("class", "gallery-group");
@@ -219,7 +268,15 @@ function createCardGallery(container, data, actions) {
             queueGroupCards(grid, groupCards, version);
         });
 
-        loadInitialVisibleBatches();
+        if (cards.length <= cardsPerBatch) {
+            // Small selections should never wait for a background task.
+            pendingBatches.slice().forEach(function (batch) {
+                appendCardBatch(batch);
+            });
+            pendingBatches = [];
+        } else {
+            scheduleBackgroundBatch(version);
+        }
     }
 
     function update(state) {

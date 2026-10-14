@@ -3,6 +3,7 @@ function createArtistPair(container, data) {
     const star = pair.append("span").attr("class", "pair-star").text("★");
     const body = pair.append("div").attr("class", "pair-body");
     const frame = body.append("div").attr("class", "pair-frame");
+    const starImage = star.append("img").attr("alt", "");
 
     function showMessage(message) {
         frame.classed("empty", true).text(message);
@@ -23,6 +24,12 @@ function createArtistPair(container, data) {
                 frame.text("Image unavailable");
             });
 
+        starImage.attr(
+            "src",
+            data.cache.artistIsMostFrequentForFavoriteCard.get(artist)
+                ? "img/estrela_preenchida.png"
+                : "img/estrela_vazia.png"
+        );
         star.style("visibility", "visible");
     }
 

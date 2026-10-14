@@ -115,6 +115,27 @@ function createCardCache(cards) {
         };
     });
 
+    const cardsByName = d3.group(cards, card => card.name);
+    const artistIsMostFrequentForFavoriteCard = new Map();
+
+    mostFamousHighestEarningCards.forEach(function (favorite) {
+        const nameCards = cardsByName.get(favorite.name) || [];
+        const artistCounts = d3.rollups(
+            nameCards,
+            group => group.length,
+            card => card.artist
+        );
+        const highestArtistCount = d3.max(artistCounts, entry => entry[1]) || 0;
+        const selectedArtistCount = artistCounts.find(
+            entry => entry[0] === favorite.artist
+        );
+
+        artistIsMostFrequentForFavoriteCard.set(
+            favorite.artist,
+            !!selectedArtistCount && selectedArtistCount[1] === highestArtistCount
+        );
+    });
+
     return {
         cardsById: cardsById,
         setCardIdsBySet: new Map(
@@ -133,6 +154,7 @@ function createCardCache(cards) {
         artistCardIds: artistCardIds,
         cardsByArtist: cardsByArtist,
         mostFamousHighestEarningCards: mostFamousHighestEarningCards,
+        artistIsMostFrequentForFavoriteCard: artistIsMostFrequentForFavoriteCard,
         artistCardIdsByArtist: new Map(artistCardIds.map(item => [item.artist, item.cardIds])),
         mostFamousHighestEarningByArtist: new Map(
             mostFamousHighestEarningCards.map(item => [item.artist, item])
