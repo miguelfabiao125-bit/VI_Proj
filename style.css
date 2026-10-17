@@ -157,12 +157,14 @@ body {
     opacity: 1;
 }
 
+
 .view-artists {
     left: 1%;
-    top: 12%;
+    top: 16%;
     width: 17.6%;
-    height: 88%;
+    height: 82%;
 }
+
 
 .artist-panel {
     height: 100%;
@@ -243,12 +245,14 @@ body {
 
 .artist-empty { font-size: 1.1cqw; padding: 0.5cqw 0; }
 
+
 .view-pair {
     left: 19.2%;
     top: 12%;
     width: 13%;
     height: 83%;
 }
+
 
 .pair {
     position: relative;
@@ -461,26 +465,42 @@ body {
     height: 82%;
 }
 
+
 .bubble-wrapper {
+    width: 100%;
     height: 100%;
+    min-height: 0;
+}
+
+.bubble-panel {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0.8cqw;
     display: flex;
     flex-direction: column;
-    gap: 0.8cqw;
+    gap: 0.7cqw;
+    overflow: hidden;
 }
 
 .bubble-header {
     display: flex;
-    gap: 0.6cqw;
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    gap: 0.45cqw;
 }
 
 .bubble-button {
-    flex: 1;
-    padding: 0.4cqw 0;
-    border: 0.2cqw solid black;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.35cqw 0.1cqw;
+    border: 0.16cqw solid black;
     border-radius: 2cqw;
     background: white;
     color: #222;
-    font-size: 1.15cqw;
+    font-size: 1.05cqw;
+    white-space: nowrap;
     cursor: pointer;
 }
 
@@ -489,11 +509,19 @@ body {
     color: white;
 }
 
-.bubble-panel {
-    flex: 1;
+.bubble-plot {
+    flex: 1 1 0;
     min-height: 0;
-    padding: 0.5cqw;
+    min-width: 0;
+    overflow: hidden;
 }
+
+.bubble-plot svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 
 .artist-summary {
     position: absolute;
