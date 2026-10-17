@@ -93,6 +93,7 @@ async function main() {
     }
 
     addView("line-chart", createLineChart);
+    addView("bar-chart", createBarChart);
     addView("artist-list", createArtistList);
     addView("artist-pair", createArtistPair);
     addView("card-gallery", createCardGallery);

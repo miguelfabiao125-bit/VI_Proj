@@ -214,11 +214,16 @@ function createCardGallery(container, data, actions) {
             field: "artist",
             value: artist
         })).concat(bubbles.map(bubble => ({
-            key: bubble.field + ":" + bubble.value,
-            label: bubbleLabels[bubble.field] + ": " + bubble.value,
-            field: bubble.field,
-            value: bubble.value
-        })));
+    key: bubble.field + ":" + bubble.value,
+    label: bubbleLabels[bubble.field] + ": " + bubble.value,
+    field: bubble.field,
+    value: bubble.value
+}))).concat(lastState.sets.length === 0 ? [] : [{
+    key: "sets",
+    label: lastState.sets.length === 1 ? "Set: " + lastState.sets[0] : "Sets: " + lastState.sets.length + " selected",
+    field: "sets",
+    value: null
+}]);
 
         filterBubbles.selectAll("button")
             .data(filters, filter => filter.key)
@@ -229,6 +234,8 @@ function createCardGallery(container, data, actions) {
                     .on("click", function (event, filter) {
                         if (filter.field === "artist") {
                             actions.toggleArtist(filter.value);
+                        } else if (filter.field === "sets") {
+                                actions.selectSets([]);
                         } else {
                             actions.clearBubble(filter.field, filter.value);
                         }
