@@ -238,24 +238,37 @@ function createCardGallery(container, data, actions) {
 }]);
 
         filterBubbles.selectAll("button")
-            .data(filters, filter => filter.key)
-            .join(
-                enter => enter.append("button")
-                    .attr("type", "button")
-                    .attr("class", "gallery-filter-bubble")
-                    .on("click", function (event, filter) {
-                        if (filter.field === "artist") {
-                            actions.toggleArtist(filter.value);
-                        } else if (filter.field === "sets") {
-                                actions.selectSets([]);
-                        } else {
-                            actions.clearBubble(filter.field, filter.value);
-                        }
-                    }),
-                update => update,
-                exit => exit.remove()
-            )
-            .text(filter => filter.label);
+    .data(filters, filter => filter.key)
+    .join(
+        enter => {
+            const button = enter.append("button")
+                .attr("type", "button")
+                .attr("class", "gallery-filter-bubble")
+                .on("click", function (event, filter) {
+                    if (filter.field === "artist") {
+                        actions.toggleArtist(filter.value);
+                    } else if (filter.field === "sets") {
+                        actions.selectSets([]);
+                    } else {
+                        actions.clearBubble(filter.field, filter.value);
+                    }
+                });
+
+            button.append("span").attr("class", "gallery-filter-label");
+            button.append("span")
+                .attr("class", "gallery-filter-remove")
+                .attr("aria-hidden", "true")
+                .text("×");
+
+            return button;
+        },
+        update => update,
+        exit => exit.remove()
+    )
+    .attr("title", filter => "Click to remove: " + filter.label)
+    .attr("aria-label", filter => "Remove filter " + filter.label)
+    .select(".gallery-filter-label")
+    .text(filter => filter.label);
 
         content.selectAll("*").remove();
 

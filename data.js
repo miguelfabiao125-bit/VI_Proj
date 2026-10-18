@@ -137,6 +137,7 @@ function createCardCache(cards) {
 
     const cardsByName = d3.group(cards, card => card.name);
     const artistIsMostFrequentForFavoriteCard = new Map();
+    const favoriteCardDetailsByArtist = new Map();
 
     mostFamousHighestEarningCards.forEach(function (favorite) {
         const nameCards = cardsByName.get(favorite.name) || [];
@@ -149,11 +150,23 @@ function createCardCache(cards) {
         const selectedArtistCount = artistCounts.find(
             entry => entry[0] === favorite.artist
         );
+        const selectedCount = selectedArtistCount ? selectedArtistCount[1] : 0;
+        const isMostFrequent = selectedCount > 0 && selectedCount === highestArtistCount;
 
-        artistIsMostFrequentForFavoriteCard.set(
-            favorite.artist,
-            !!selectedArtistCount && selectedArtistCount[1] === highestArtistCount
-        );
+        artistIsMostFrequentForFavoriteCard.set(favorite.artist, isMostFrequent);
+
+        favoriteCardDetailsByArtist.set(favorite.artist, {
+            cardName: favorite.name,
+            price: favorite.price,
+            artistCount: selectedCount,
+            topCount: highestArtistCount,
+            totalPrints: nameCards.length,
+            topArtists: artistCounts
+                .filter(entry => entry[1] === highestArtistCount)
+                .map(entry => entry[0])
+                .sort(d3.ascending),
+            isMostFrequent: isMostFrequent
+        });
     });
 
     return {
@@ -175,6 +188,7 @@ function createCardCache(cards) {
         cardsByArtist: cardsByArtist,
         mostFamousHighestEarningCards: mostFamousHighestEarningCards,
         artistIsMostFrequentForFavoriteCard: artistIsMostFrequentForFavoriteCard,
+        favoriteCardDetailsByArtist: favoriteCardDetailsByArtist,
         artistCardIdsByArtist: new Map(artistCardIds.map(item => [item.artist, item.cardIds])),
         mostFamousHighestEarningByArtist: new Map(
             mostFamousHighestEarningCards.map(item => [item.artist, item])

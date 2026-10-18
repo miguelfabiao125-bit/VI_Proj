@@ -4,6 +4,7 @@ function createArtistPair(container, data) {
     const body = pair.append("div").attr("class", "pair-body");
     const frame = body.append("div").attr("class", "pair-frame");
     const starImage = star.append("img").attr("alt", "");
+    const tip = star.append("span").attr("class", "pair-tooltip");
 
     function showMessage(message) {
         frame.classed("empty", true).text(message);
@@ -36,6 +37,17 @@ function createArtistPair(container, data) {
                 ? "img/estrela_preenchida.png"
                 : "img/estrela_vazia.png"
         );
+        const info = data.cache.favoriteCardDetailsByArtist.get(artist);
+
+            tip.selectAll("*").remove();
+                if (info.isMostFrequent) {
+                    tip.append("strong").text("★ Signature card");
+                    tip.append("span").text("No other artist has illustrated more.");
+                } else {
+                     tip.append("strong").text("☆ Shared card");
+                    tip.append("span").text("Another artist has illustrated more.");
+                }
+
         star.style("visibility", "visible");
     }
 
