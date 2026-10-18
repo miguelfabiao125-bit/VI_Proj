@@ -1,3 +1,21 @@
+//
+const IMAGE_SOURCES = {
+    remote: "https://tcgplayer-cdn.tcgplayer.com/product/",
+    //para o com a pasta das imagens
+    //local: "Images/"
+    local:null
+};
+
+const PREFERRED_IMAGE_SOURCE = "remote";
+
+//para a versão com a pasta das imagens 
+//const PREFERRED_IMAGE_SOURCE = "local";
+
+function imageUrl(imageId, source) {
+    const base = IMAGE_SOURCES[source];
+    return base ? base + parseInt(imageId) + "_200w.jpg" : null;
+}
+
 function parseList(text) {
     const items = (text || "").match(/'([^']*)'|"([^"]*)"/g) || [];
     return items.map(item => item.slice(1, -1)).join(" / ") || "Unknown";
@@ -5,6 +23,7 @@ function parseList(text) {
 
 async function loadCards(path) {
     const rows = await d3.csv(path);
+    const other = PREFERRED_IMAGE_SOURCE === "remote" ? "local" : "remote";
 
     return rows
         .map(row => ({
@@ -13,7 +32,8 @@ async function loadCards(path) {
             type: parseList(row.types),
             subtype: parseList(row.subtypes),
             rarity: row.rarity || "Unknown",
-            image: "Images/" + parseInt(row.ImageID) + "_200w.jpg"
+            image: imageUrl(row.ImageID, PREFERRED_IMAGE_SOURCE),
+            imageFallback: imageUrl(row.ImageID, other)
         }))
         .filter(card => card.artist && !isNaN(card.year));
 }

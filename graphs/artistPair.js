@@ -19,7 +19,13 @@ function createArtistPair(container, data) {
             .attr("src", bestCard.image)
             .attr("alt", bestCard.name)
             .attr("title", bestCard.name + " - $" + bestCard.Price)
+            // 
             .on("error", function () {
+                if (!this.dataset.triedFallback && bestCard.imageFallback) {
+                    this.dataset.triedFallback = "1";
+                    this.src = bestCard.imageFallback;
+                    return;
+                }
                 d3.select(this).remove();
                 frame.text("Image unavailable");
             });

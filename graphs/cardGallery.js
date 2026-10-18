@@ -74,10 +74,18 @@ function createCardGallery(container, data, actions) {
                     return;
                 }
 
+                
                 item.image.removeAttribute("src");
+                    const nextAttempt = item.attempt + 1;
+                    const useFallback = nextAttempt % 2 === 1 && item.image.dataset.fallback;
                 window.setTimeout(function () {
-                    queueImage(item.image, item.url, item.version, item.attempt + 1);
-                }, 100 * (item.attempt + 1));
+                    queueImage(
+                        item.image,
+                        useFallback ? item.image.dataset.fallback : item.image.dataset.primary,
+                        item.version,
+                        nextAttempt
+                    );
+                }, 100 * nextAttempt);
             };
 
             activeImageFinishes.add(finish);
@@ -130,6 +138,10 @@ function createCardGallery(container, data, actions) {
             image.decoding = "async";
             image.alt = card.name;
             image.title = card.name + " - $" + card.Price;
+            image.dataset.primary = card.image; 
+            if (card.imageFallback) {
+                image.dataset.fallback = card.imageFallback;   
+            }
             fragment.appendChild(image);
             images.push({ image: image, url: card.image });
         }
