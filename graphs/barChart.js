@@ -9,7 +9,8 @@ function createBarChart(container, data, actions) {
         { label: "Series",     field: "series" }
     ].filter(item => data.cards.some(card => card[item.field]));
 
-    let current = groupings.find(item => item.field === "series") || groupings[0];
+    let current = groupings.find(item => item.field === "generation") || groupings[0];
+    let drill = null;
     let lastState = { artists: [], years: [], sets: [], bubbles: [] };
     let startIndex = 0;      
     let maxStart = 0;
@@ -23,22 +24,26 @@ function createBarChart(container, data, actions) {
     const valueOf = item => item[metric];
     const keyOf = (card, field) => (card[field] || "Unknown").trim();
 
-    function groupsFor(field) {
-        if (!groupsCache.has(field)) {
-            const groups = Array.from(
-                d3.group(data.cards, card => keyOf(card, field)),
-                ([name, cards]) => ({
-                    name: name,
-                    count: cards.length,
-                    value: d3.sum(cards, priceOf),
-                    sets: Array.from(new Set(cards.map(card => card.set))),
-                    year: d3.min(cards, card => card.year)
-                })
-            ).sort((a, b) => a.year - b.year || d3.ascending(a.name, b.name));
-            groupsCache.set(field, groups);
-        }
-        return groupsCache.get(field);
+    function groupsFor(field, drillName) {
+    const cacheKey = field + "|" + (drillName || "");
+    if (!groupsCache.has(cacheKey)) {
+        const source = drillName
+            ? data.cards.filter(card => keyOf(card, "generation") === drillName)
+            : data.cards;
+        const groups = Array.from(
+            d3.group(source, card => keyOf(card, field)),
+            ([name, cards]) => ({
+                name: name,
+                count: cards.length,
+                value: d3.sum(cards, priceOf),
+                sets: Array.from(new Set(cards.map(card => card.set))),
+                year: d3.min(cards, card => card.year)
+            })
+        ).sort((a, b) => a.year - b.year || d3.ascending(a.name, b.name));
+        groupsCache.set(cacheKey, groups);
     }
+    return groupsCache.get(cacheKey);
+}
 
     function topArtists(setNames) {
         const cards = setNames
@@ -46,13 +51,22 @@ function createBarChart(container, data, actions) {
             .map(id => data.cache.cardsById.get(id));
 
         return d3.rollups(
-            cards,
-            group => ({ count: group.length, value: d3.sum(group, priceOf) }),
-            card => card.artist
-        )
-            .map(([artist, sums]) => ({ artist: artist, count: sums.count, value: sums.value }))
-            .sort((a, b) => b[metric] - a[metric] || d3.ascending(a.artist, b.artist))
-            .slice(0, 3);
+    cards,
+    group => ({
+        count: group.length,
+        value: d3.sum(group, priceOf),
+        bestCard: d3.greatest(group, priceOf)   
+    }),
+    card => card.artist
+)
+    .map(([artist, sums]) => ({
+        artist: artist,
+        count: sums.count,
+        value: sums.value,
+        bestCard: sums.bestCard
+    }))
+    .sort((a, b) => b[metric] - a[metric] || d3.ascending(a.artist, b.artist))
+    .slice(0, 3);
     }
 
     function isSelected(group) {
@@ -61,8 +75,21 @@ function createBarChart(container, data, actions) {
     }
 
     function toggleGroup(group) {
-        actions.selectSets(isSelected(group) ? [] : group.sets);
+    if (drill) {
+        // dentro de uma geração: clicar numa série filtra; clicar de novo volta aos sets da geração
+        const generation = groupsFor("generation").find(item => item.name === drill);
+        actions.selectSets(isSelected(group) ? generation.sets : group.sets);
+        return;
     }
+    if (current.field === "generation" && !isSelected(group)) {
+        drill = group.name;          // abre a geração
+        startIndex = 0;
+        lastSelectedName = null;
+        actions.selectSets(group.sets);
+        return;
+    }
+    actions.selectSets(isSelected(group) ? [] : group.sets);
+}
 
     const wrapper = d3.select(container).append("div").attr("class", "bar-wrapper");
     const body = wrapper.append("div").attr("class", "bar-body");
@@ -70,6 +97,7 @@ function createBarChart(container, data, actions) {
     const main = body.append("div").attr("class", "bar-main");
 
     const scrollbar = main.append("div").attr("class", "bar-scroll");
+    const title = main.append("div").attr("class", "chart-title");
 
     const arrowIcon = direction => direction < 0
         ? '<svg viewBox="0 0 10 10"><path d="M7 1 L2 5 L7 9 Z"/></svg>'
@@ -102,20 +130,32 @@ function createBarChart(container, data, actions) {
         .attr("class", "bar-pill bar-group")
         .text(item => item.label)
         .on("click", function (event, item) {
-            if (item === current) {
-                return;
-            }
-            current = item;
-            startIndex = 0;
-            lastSelectedName = null;
-            if (lastState.sets.length > 0) {
-                actions.selectSets([]);
-            } else {
-                render();
-            }
-        });
+    if (item === current && !drill) {
+        return;
+    }
+    current = item;
+    drill = null;
+    startIndex = 0;
+    lastSelectedName = null;
+    if (lastState.sets.length > 0) {
+        actions.selectSets([]);
+    } else {
+        render();
+    }
+});
 
     strip.append("span").attr("class", "bar-divider");
+    const drillLabel = strip.append("button")
+    .attr("type", "button")
+    .attr("class", "bar-pill active")
+    .style("display", "none")
+    .attr("title", "Back to all generations")
+    .on("click", function () {
+        drill = null;
+        startIndex = 0;
+        lastSelectedName = null;
+        actions.selectSets([]);
+    });
     const itemsHost = strip.append("div").attr("class", "bar-items");
     const itemsTrack = itemsHost.append("div").attr("class", "bar-items-track");
 
@@ -265,15 +305,21 @@ function createBarChart(container, data, actions) {
                 return;
             }
 
-            const favorite = data.cache.mostFamousHighestEarningByArtist.get(item.artist);
-            const card = favorite && data.cache.cardsById.get(favorite.cardId);
-            if (card) {
-                frame.append("img")
-                    .attr("src", card.image)
-                    .attr("alt", card.name)
-                    .attr("title", card.name + " - $" + card.Price)
-                    .on("error", function () { d3.select(this).remove(); });
+            const card = item.bestCard;
+if (card) {
+    frame.append("img")
+        .attr("src", card.image)
+        .attr("alt", card.name)
+        .attr("title", card.name + " - $" + card.Price)
+        .on("error", function () {
+            if (!this.dataset.triedFallback && card.imageFallback) {
+                this.dataset.triedFallback = "1";
+                this.src = card.imageFallback;
+                return;
             }
+            d3.select(this).remove();
+        });
+}
 
             text.append("span").attr("class", "bar-top-name").text(item.artist);
             text.append("span").text(d3.format(",")(item.count) + " cards");
@@ -283,8 +329,14 @@ function createBarChart(container, data, actions) {
 
     function render() {
         buttons.classed("active", item => item === current);
+        title.text(drill
+    ? "Total Card Value per Series (Generation " + drill + ")"
+    : "Total Card Value per " + current.label);
 
-        const groups = groupsFor(current.field);
+        const groups = groupsFor(current.field === "generation" && drill ? "series" : current.field, drill);
+drillLabel
+    .style("display", drill ? null : "none")
+    .text(drill ? "Generation " + drill : "");
 
         itemsTrack.selectAll("button")
             .data(groups, item => item.name)
@@ -311,7 +363,7 @@ function createBarChart(container, data, actions) {
 
         const selected = groups.find(isSelected);
         const top = topArtists(lastState.sets);
-        drawTop(top, selected && selected.name);
+        drawTop(top, selected ? selected.name : (drill ? "Generation " + drill : null));
 
         const width = plot.node().clientWidth;
         const height = plot.node().clientHeight;
@@ -439,9 +491,15 @@ function createBarChart(container, data, actions) {
     }
 
     function update(state) {
-        lastState = state;
-        render();
+    lastState = state;
+    // Reset Filters (ou qualquer limpeza de sets) fecha a geração aberta
+    if (drill && state.sets.length === 0) {
+        drill = null;
+        startIndex = 0;
+        lastSelectedName = null;
     }
+    render();
+}
 
     return { update: update };
 }

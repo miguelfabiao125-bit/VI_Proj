@@ -27,11 +27,14 @@ function createCardGallery(container, data, actions) {
         .attr("stroke-width", 2.5)
         .attr("stroke-linecap", "round");
 
+    header.append("span").attr("class", "chart-title").text("Cards");
+
     const filterBubbles = header.append("div")
         .attr("class", "gallery-filter-bubbles");
 
     const scroller = panel.append("div").attr("class", "gallery-scroll");
     const content = scroller.append("div").attr("class", "gallery-content");
+    const allCardsSorted = data.cards.slice().sort((a, b) => a.year - b.year);
 
     const lazyObserver = new IntersectionObserver(function (entries) {
     entries.forEach(function (entry) {
@@ -272,26 +275,13 @@ function createCardGallery(container, data, actions) {
 
         content.selectAll("*").remove();
 
-        const hasSelectedFilter = lastState.artists.length > 0
-            || lastState.sets.length > 0
-            || bubbles.length > 0;
+      const hasSelectedFilter = lastState.artists.length > 0
+    || lastState.sets.length > 0
+    || bubbles.length > 0;
 
-        if (!hasSelectedFilter) {
-            content.append("div")
-                .attr("class", "gallery-empty")
-                .text("Select an artist or filter to see cards");
-            return;
-        }
-
-        const cards = selectedCards(data, lastState, false).slice()
-            .sort((a, b) => a.year - b.year);
-
-        if (cards.length === 0) {
-            content.append("div")
-                .attr("class", "gallery-empty")
-                .text("No cards match the current filters");
-            return;
-        }
+const cards = hasSelectedFilter
+    ? selectedCards(data, lastState, false).slice().sort((a, b) => a.year - b.year)
+    : allCardsSorted;
 
         const groups = d3.group(cards, card => card[setGrouping.field] || "Unknown");
 

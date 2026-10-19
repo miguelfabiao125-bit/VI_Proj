@@ -1,4 +1,3 @@
-
 const bubbleCountsCache = new Map();
 
 function createBubbleChart(container, data, actions) {
@@ -78,9 +77,7 @@ function createBubbleChart(container, data, actions) {
         bubbles: []
     };
 
-    // ALTERAÇÃO:
-    // O header passa a estar dentro do bubble-panel.
-
+    
     const wrapper = d3.select(container)
         .append("div")
         .attr("class", "bubble-wrapper");
@@ -88,6 +85,25 @@ function createBubbleChart(container, data, actions) {
     const panel = wrapper
         .append("div")
         .attr("class", "bubble-panel");
+
+    panel.append("div").attr("class", "chart-title").text("Card Distribution");
+
+    const help = panel.append("div").attr("class", "line-chart-help bubble-help");
+    help.append("button")
+        .attr("type", "button")
+        .attr("class", "line-chart-help-button")
+        .attr("aria-label", "Show bubble chart instructions")
+        .html(HELP_ICON);
+
+    const pop = help.append("div")
+        .attr("class", "line-chart-help-popover")
+        .attr("role", "tooltip");
+    pop.append("strong").text("How to read the bubble chart");
+    [
+        "Bubble size is the number of cards in that category.",
+        "The buttons bellow change the category.",
+        "Click a bubble to filter all views. Click again to clear."
+    ].forEach(line => pop.append("span").text(line));
 
     const header = panel
         .append("div")
@@ -105,9 +121,7 @@ function createBubbleChart(container, data, actions) {
             render();
         });
 
-    // ALTERAÇÃO:
-    // Criado bubble-plot dentro do painel.
-    // O SVG fica abaixo dos botões.
+ 
 
     const plot = panel
         .append("div")

@@ -24,7 +24,7 @@ function createLineChart(container, data, actions) {
     help.className = "line-chart-help";
     help.innerHTML = `
         <button type="button" class="line-chart-help-button" aria-label="Show line chart zoom instructions">
-            <img src="img/PokeStop.png" alt="">
+            ${HELP_ICON}
         </button>
         <div class="line-chart-help-popover" role="tooltip">
             <strong>Zoom in/out in the line chart</strong>

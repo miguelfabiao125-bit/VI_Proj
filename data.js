@@ -11,6 +11,13 @@ const PREFERRED_IMAGE_SOURCE = "remote";
 //para a versão com a pasta das imagens 
 //const PREFERRED_IMAGE_SOURCE = "local";
 
+const HELP_ICON = `
+<svg viewBox="4 3 16 18" fill="none" stroke="currentColor" stroke-width="2.4"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5"/>
+    <circle cx="12" cy="17.8" r="0.4" fill="currentColor"/>
+</svg>`;
+
 function imageUrl(imageId, source) {
     const base = IMAGE_SOURCES[source];
     return base ? base + parseInt(imageId) + "_200w.jpg" : null;
@@ -322,6 +329,7 @@ function selectedCards(data, state, ignoreBubble) {
      if (data.cache.selectedCardsCache.size > 128) {
         data.cache.selectedCardsCache.delete(data.cache.selectedCardsCache.keys().next().value);
     }
+
 
     return result;
 }
