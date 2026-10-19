@@ -355,6 +355,77 @@ body {
 
 .pair-frame img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
+.pair-info {
+    position: absolute;
+    z-index: 6;
+    left: 25.7%;
+    top: 18.2cqw;
+    transform: translateX(-50%);
+    width: 12cqw;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5cqw;
+    color: white;
+    text-align: center;
+    line-height: 1.15;
+}
+
+.pair-name {
+    font-size: 1.15cqw;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.pair-total-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6cqw;
+}
+
+.pair-total-number { font-size: 1.15cqw; }
+
+.pair-total-icon {
+    display: inline-flex;
+    width: 1.6cqw;
+    height: 1.6cqw;
+    color: white;
+}
+
+.pair-total-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.pair-carousel {
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4cqw;
+}
+
+.pair-count { font-size: 0.95cqw; }
+
+.pair-arrow {
+    flex: none;
+    width: 1.8cqw;
+    height: 1.8cqw;
+    padding: 0.5cqw;
+    border: 0.15cqw solid black;
+    border-radius: 50%;
+    background: white;
+    color: #222;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 150ms ease, color 150ms ease;
+}
+
+.pair-arrow svg { display: block; width: 100%; height: 100%; fill: currentColor; }
+.pair-arrow:hover { background: #ee6a61; color: white; }
+
+
+
 .view-gallery {
     left: 33.4%;
     top: 16%;
@@ -600,63 +671,10 @@ body {
 }
 
 
-.artist-summary {
-    position: absolute;
-    z-index: 2;
-    left: calc(19.2% + 6.5% - 4.3cqw);
-    width: 12cqw;
-    transform: none;
-    top: 17.5cqw;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.9cqw;
-    color: white;
-    text-align: left;
-}
-
-.artist-total {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.3cqw;
-    line-height: 1.1;
-}
-
-.artist-total-name {
-    width: 12cqw;
-    max-width: 12cqw;
-    min-height: 0;
-    font-size: 1.15cqw;
-    line-height: 1.1;
-    text-align: left;
-    overflow-wrap: anywhere;
-}
-
-.artist-total-row {
-    display: flex;
-    align-items: center;
-    gap: 0.6cqw;
-}
-
-.artist-total-number { font-size: 1.15cqw; }
-
-.artist-total-icon {
-    display: inline-flex;
-    width: 1.6cqw;
-    height: 1.6cqw;
-    color: white;
-}
-
-.artist-total-icon svg {
-    width: 100%;
-    height: 100%;
-}
-
 .artist-reset {
     position: absolute;
     z-index: 10;
-    bottom: 2cqw;
+    bottom: 2%;
     left: 25.7%;
     transform: translateX(-50%);
     width: max-content;
@@ -827,6 +845,21 @@ body {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.bar-strip.is-drilled {
+    flex-wrap: wrap;
+    row-gap: 0.4cqw;
+}
+
+.bar-strip.is-drilled > .bar-pill:not(.bar-group) {
+    flex: none;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.bar-strip.is-drilled .bar-items {
+    flex: 1 1 100%;
 }
 
 

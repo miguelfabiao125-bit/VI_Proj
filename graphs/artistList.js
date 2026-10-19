@@ -20,32 +20,7 @@ function createArtistList(container, data, actions) {
     topArea.selectAll(".artist-summary").remove();
     topArea.selectAll(".artist-reset").remove();
 
-    const summary = topArea.append("div").attr("class", "artist-summary");
-    const totalLabel = summary.append("div").attr("class", "artist-total");
-
-    const artistName = totalLabel.append("div").attr("class", "artist-total-name");
-    const totalRow = totalLabel.append("div").attr("class", "artist-total-row");
-    const totalNumber = totalRow.append("span").attr("class", "artist-total-number");
-
-    totalRow.append("span")
-        .attr("class", "artist-total-icon")
-        .attr("title", "Cards by the selected artists")
-        .html(`
-            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"
-                 stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
-                <mask id="artist-total-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32">
-                    <rect width="32" height="32" fill="white"/>
-                    <rect x="11" y="6" width="16" height="22" rx="2.5" fill="black" stroke="black" stroke-width="3.5"/>
-                </mask>
-                <g mask="url(#artist-total-mask)">
-                    <rect x="4" y="6" width="16" height="22" rx="2.5" transform="rotate(-14 12 17)"/>
-                </g>
-                <rect x="11" y="6" width="16" height="22" rx="2.5"/>
-                <path d="M19 12 L23 17 L19 22 L15 17 Z"/>
-            </svg>
-        `);
-
-    const resetButton = topArea.append("button")
+    topArea.append("button")
         .attr("type", "button")
         .attr("class", "artist-reset")
         .text("Reset Filters")
@@ -88,23 +63,9 @@ function createArtistList(container, data, actions) {
         render();
     });
 
-            function update(state) {
+    function update(state) {
         selected = new Set(state.artists);
         content.selectAll("input").property("checked", artist => selected.has(artist));
-
-        const total = state.artists.reduce(function (sum, artist) {
-            const ids = data.cache.artistCardIdsByArtist.get(artist);
-            return sum + (ids ? ids.length : 0);
-        }, 0);
-
-        totalNumber.text(total);
-        totalRow.style("display", total > 0 ? "flex" : "none");
-
-         artistName
-            .text(state.artists.length === 1 ? state.artists[0] : "")
-            .style("visibility", state.artists.length === 1 ? "visible" : "hidden");
-
-        resetButton.property("disabled", false);
     }
 
     render();

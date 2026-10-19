@@ -102,7 +102,7 @@ function createBubbleChart(container, data, actions) {
     [
         "Bubble size is the number of cards in that category.",
         "The buttons bellow change the category.",
-        "Click a bubble to filter all views. Click again to clear."
+        "Click a bubble to filter the galery. Click again to clear."
     ].forEach(line => pop.append("span").text(line));
 
     const header = panel

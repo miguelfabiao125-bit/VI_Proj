@@ -334,9 +334,10 @@ if (card) {
     : "Total Card Value per " + current.label);
 
         const groups = groupsFor(current.field === "generation" && drill ? "series" : current.field, drill);
-drillLabel
-    .style("display", drill ? null : "none")
+drillLabel.style("display", drill ? null : "none")
     .text(drill ? "Generation " + drill : "");
+
+    strip.classed("is-drilled", !!drill);
 
         itemsTrack.selectAll("button")
             .data(groups, item => item.name)

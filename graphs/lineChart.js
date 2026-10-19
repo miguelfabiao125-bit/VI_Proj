@@ -107,7 +107,7 @@ function createLineChart(container, data, actions) {
 
         const first = d3.min(bandYears);
         const last = d3.max(bandYears);
-        const padding = first === last ? 0.2 : 0;
+        const padding = first === last ? 0.1 : 0;
         const left = x(first - padding);
         const bandWidth = Math.max(x(last + padding) - left, 2);
 
