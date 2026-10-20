@@ -340,9 +340,17 @@ body {
     align-items: center;
 }
 
+.pair-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3cqw;
+    margin-top: 2cqw;
+}
+
 .pair-frame {
     width: 8.6cqw;
-    margin-top: 2cqw;
+    margin-top: 0;
     align-self: center;
     aspect-ratio: 5 / 7;
     box-sizing: border-box;
@@ -402,33 +410,42 @@ body {
     height: 100%;
 }
 
-.pair-carousel {
-    width: 100%;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.4cqw;
-}
-
 .pair-count { font-size: 0.95cqw; }
+
+.pair-total-note {
+    font-size: 0.73cqw;
+    white-space: nowrap;
+    opacity: 0.85;
+}
 
 .pair-arrow {
     flex: none;
-    width: 1.8cqw;
-    height: 1.8cqw;
-    padding: 0.5cqw;
-    border: 0.15cqw solid black;
-    border-radius: 50%;
-    background: white;
-    color: #222;
+    width: 1.1cqw;
+    height: 2cqw;
+    padding: 0;
+    border: none;
+    background: none;
+    color: white;
+    opacity: 0.65;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 150ms ease, color 150ms ease;
+    transition: opacity 150ms ease;
 }
 
-.pair-arrow svg { display: block; width: 100%; height: 100%; fill: currentColor; }
-.pair-arrow:hover { background: #ee6a61; color: white; }
+.pair-arrow svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.pair-arrow:hover { opacity: 1; }
 
 
 
@@ -853,19 +870,10 @@ body {
     text-overflow: ellipsis;
 }
 
-.bar-strip.is-drilled {
-    flex-wrap: wrap;
-    row-gap: 0.4cqw;
-}
-
-.bar-strip.is-drilled > .bar-pill:not(.bar-group) {
+.bar-crumbs {
     flex: none;
-    overflow: visible;
-    text-overflow: clip;
-}
-
-.bar-strip.is-drilled .bar-items {
-    flex: 1 1 100%;
+    display: flex;
+    gap: 0.5cqw;
 }
 
 

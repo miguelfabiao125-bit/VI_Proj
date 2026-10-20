@@ -5,13 +5,33 @@ function createArtistPair(container, data) {
     const pair = d3.select(container).append("div").attr("class", "pair");
     const star = pair.append("span").attr("class", "pair-star").text("★");
     const body = pair.append("div").attr("class", "pair-body");
-    const frame = body.append("div").attr("class", "pair-frame");
+
+    const arrowIcon = direction => direction < 0
+        ? '<svg viewBox="0 0 10 16"><path d="M8 1.5 L2 8 L8 14.5"/></svg>'
+        : '<svg viewBox="0 0 10 16"><path d="M2 1.5 L8 8 L2 14.5"/></svg>';
+
+    const stage = body.append("div").attr("class", "pair-stage");
+
+    const prevArrow = stage.append("button")
+        .attr("type", "button")
+        .attr("class", "pair-arrow")
+        .attr("aria-label", "Previous artist")
+        .html(arrowIcon(-1))
+        .on("click", () => go(-1));
+
+    const frame = stage.append("div").attr("class", "pair-frame");
+
+    const nextArrow = stage.append("button")
+        .attr("type", "button")
+        .attr("class", "pair-arrow")
+        .attr("aria-label", "Next artist")
+        .html(arrowIcon(1))
+        .on("click", () => go(1));
     const starImage = star.append("img").attr("alt", "");
     const tip = star.append("span").attr("class", "pair-tooltip");
 
     const topArea = d3.select(container.parentNode);
     topArea.selectAll(".pair-info").remove();
-    topArea.selectAll(".pair-carousel").remove();
 
     // Bloco: nome -> total -> setas
     const info = topArea.append("div")
@@ -40,32 +60,18 @@ function createArtistPair(container, data) {
             </svg>
         `);
 
-    const arrowIcon = direction => direction < 0
-        ? '<svg viewBox="0 0 10 10"><path d="M7 1 L2 5 L7 9 Z"/></svg>'
-        : '<svg viewBox="0 0 10 10"><path d="M3 1 L8 5 L3 9 Z"/></svg>';
+    const totalNote = info.append("div")
+        .attr("class", "pair-total-note")
+        .style("display", "none");
 
-    const carousel = info.append("div").attr("class", "pair-carousel");
-
-    carousel.append("button")
-        .attr("type", "button")
-        .attr("class", "pair-arrow")
-        .attr("aria-label", "Previous artist")
-        .html(arrowIcon(-1))
-        .on("click", () => go(-1));
-
-    const counter = carousel.append("div").attr("class", "pair-count");
-
-    carousel.append("button")
-        .attr("type", "button")
-        .attr("class", "pair-arrow")
-        .attr("aria-label", "Next artist")
-        .html(arrowIcon(1))
-        .on("click", () => go(1));
+    const counter = info.append("div").attr("class", "pair-count");
 
     function showMessage(message) {
         frame.classed("empty", true).text(message);
         star.style("visibility", "hidden");
         info.style("display", "none");
+        prevArrow.style("visibility", "hidden");
+        nextArrow.style("visibility", "hidden");
     }
 
     function showArtist(artist) {
@@ -126,8 +132,14 @@ function createArtistPair(container, data) {
         info.style("display", "flex");
         name.text(artists[index]);                    // artista que está a ser mostrado
         totalNumber.text(totalCards());               // soma de TODOS os selecionados
-        counter.text((index + 1) + " / " + artists.length);
-        carousel.style("display", artists.length > 1 ? "flex" : "none");
+        const many = artists.length > 1;
+        counter.text((index + 1) + " / " + artists.length)
+            .style("display", many ? null : "none");
+        totalNote
+            .style("display", many ? null : "none")
+            .text("Sum of the cards of the" + artists.length + " artists");
+        prevArrow.style("visibility", many ? "visible" : "hidden");
+        nextArrow.style("visibility", many ? "visible" : "hidden");
     }
 
     function go(step) {

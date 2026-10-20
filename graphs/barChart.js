@@ -10,7 +10,7 @@ function createBarChart(container, data, actions) {
     ].filter(item => data.cards.some(card => card[item.field]));
 
     let current = groupings.find(item => item.field === "generation") || groupings[0];
-    let drill = null;
+    let path = [];   // ex.: [{field:"generation", name:"Third"}, {field:"series", name:"EX"}]
     let lastState = { artists: [], years: [], sets: [], bubbles: [] };
     let startIndex = 0;      
     let maxStart = 0;
@@ -24,26 +24,49 @@ function createBarChart(container, data, actions) {
     const valueOf = item => item[metric];
     const keyOf = (card, field) => (card[field] || "Unknown").trim();
 
-    function groupsFor(field, drillName) {
-    const cacheKey = field + "|" + (drillName || "");
-    if (!groupsCache.has(cacheKey)) {
-        const source = drillName
-            ? data.cards.filter(card => keyOf(card, "generation") === drillName)
-            : data.cards;
-        const groups = Array.from(
-            d3.group(source, card => keyOf(card, field)),
-            ([name, cards]) => ({
-                name: name,
-                count: cards.length,
-                value: d3.sum(cards, priceOf),
-                sets: Array.from(new Set(cards.map(card => card.set))),
-                year: d3.min(cards, card => card.year)
-            })
-        ).sort((a, b) => a.year - b.year || d3.ascending(a.name, b.name));
-        groupsCache.set(cacheKey, groups);
+    const levels = ["generation", "series"];
+    const fieldTitle = { generation: "Generation", series: "Series", set: "Set" };
+    const generationLabels = {
+        First: "1st Gen", Second: "2nd Gen", Third: "3rd Gen", Fourth: "4th Gen",
+        Fifth: "5th Gen", Sixth: "6th Gen", Seventh: "7th Gen", Eighth: "8th Gen", Ninth: "9th Gen"
+    };
+    const labelOf = (field, name) => field === "generation" ? (generationLabels[name] || name) : name;
+
+    function cardsIn(steps) {
+        return data.cards.filter(card => steps.every(step => keyOf(card, step.field) === step.name));
     }
-    return groupsCache.get(cacheKey);
-}
+
+    function setsOf(steps) {
+        return Array.from(new Set(cardsIn(steps).map(card => card.set)));
+    }
+
+    // campo das barras/pills no nível atual
+    function childField() {
+        if (path.length === 0) {
+            return current.field;
+        }
+        return levels[levels.indexOf(path[path.length - 1].field) + 1];
+    }
+
+    function groupsFor(field, steps) {
+        const cacheKey = field + "|" + steps.map(step => step.field + "=" + step.name).join(">");
+        if (!groupsCache.has(cacheKey)) {
+            const groups = Array.from(
+                d3.group(cardsIn(steps), card => keyOf(card, field)),
+                ([name, cards]) => ({
+                    field: field,
+                    name: name,
+                    label: labelOf(field, name),
+                    count: cards.length,
+                    value: d3.sum(cards, priceOf),
+                    sets: Array.from(new Set(cards.map(card => card.set))),
+                    year: d3.min(cards, card => card.year)
+                })
+            ).sort((a, b) => a.year - b.year || d3.ascending(a.name, b.name));
+            groupsCache.set(cacheKey, groups);
+        }
+        return groupsCache.get(cacheKey);
+    }
 
     function topArtists(setNames) {
         const cards = setNames
@@ -74,22 +97,35 @@ function createBarChart(container, data, actions) {
             && group.sets.every(name => lastState.sets.includes(name));
     }
 
-    function toggleGroup(group) {
-    if (drill) {
-        // dentro de uma geração: clicar numa série filtra; clicar de novo volta aos sets da geração
-        const generation = groupsFor("generation").find(item => item.name === drill);
-        actions.selectSets(isSelected(group) ? generation.sets : group.sets);
-        return;
+    // texto do filtro que aparece na galeria
+    function setsLabelOf(field, name) {
+        return fieldTitle[field] + ": " + name;
     }
-    if (current.field === "generation" && !isSelected(group)) {
-        drill = group.name;          // abre a geração
+
+    // BARRAS: só selecionam/destacam; o gráfico nunca muda
+    function selectGroup(group) {
+        if (isSelected(group)) {
+            const last = path[path.length - 1];
+            actions.selectSets(
+                path.length ? setsOf(path) : [],
+                last ? setsLabelOf(last.field, last.name) : null
+            );
+        } else {
+            actions.selectSets(group.sets, setsLabelOf(group.field, group.name));
+        }
+    }
+
+    // PILLS: mudam o gráfico (entram no nível seguinte)
+    function drillInto(group) {
+        if (levels.indexOf(group.field) === levels.length - 1) {      // sets são o último nível
+            selectGroup(group);
+            return;
+        }
+        path = path.concat({ field: group.field, name: group.name });
         startIndex = 0;
         lastSelectedName = null;
-        actions.selectSets(group.sets);
-        return;
+        actions.selectSets(group.sets, setsLabelOf(group.field, group.name));
     }
-    actions.selectSets(isSelected(group) ? [] : group.sets);
-}
 
     const wrapper = d3.select(container).append("div").attr("class", "bar-wrapper");
     const body = wrapper.append("div").attr("class", "bar-body");
@@ -130,11 +166,11 @@ function createBarChart(container, data, actions) {
         .attr("class", "bar-pill bar-group")
         .text(item => item.label)
         .on("click", function (event, item) {
-    if (item === current && !drill) {
+    if (item === current && path.length === 0) {
         return;
     }
     current = item;
-    drill = null;
+    path = [];
     startIndex = 0;
     lastSelectedName = null;
     if (lastState.sets.length > 0) {
@@ -145,17 +181,7 @@ function createBarChart(container, data, actions) {
 });
 
     strip.append("span").attr("class", "bar-divider");
-    const drillLabel = strip.append("button")
-    .attr("type", "button")
-    .attr("class", "bar-pill active")
-    .style("display", "none")
-    .attr("title", "Back to all generations")
-    .on("click", function () {
-        drill = null;
-        startIndex = 0;
-        lastSelectedName = null;
-        actions.selectSets([]);
-    });
+    const crumbs = strip.append("div").attr("class", "bar-crumbs");
     const itemsHost = strip.append("div").attr("class", "bar-items");
     const itemsTrack = itemsHost.append("div").attr("class", "bar-items-track");
 
@@ -329,23 +355,39 @@ if (card) {
 
     function render() {
         buttons.classed("active", item => item === current);
-        title.text(drill
-    ? "Total Card Value per Series (Generation " + drill + ")"
-    : "Total Card Value per " + current.label);
 
-        const groups = groupsFor(current.field === "generation" && drill ? "series" : current.field, drill);
-drillLabel.style("display", drill ? null : "none")
-    .text(drill ? "Generation " + drill : "");
+        const field = childField();
+        title.text("Total Card Value per " + fieldTitle[field]
+            + (path.length ? " (" + path.map(step => labelOf(step.field, step.name)).join(", ") + ")" : ""));
 
-    strip.classed("is-drilled", !!drill);
+        const groups = groupsFor(field, path);
+        const labelByName = new Map(groups.map(item => [item.name, item.label]));
+
+        crumbs.selectAll("button")
+            .data(path, step => step.field)
+            .join("button")
+            .attr("type", "button")
+            .attr("class", "bar-pill active")
+            .attr("title", "Go back")
+            .text(step => labelOf(step.field, step.name))
+            .on("click", function (event, step) {
+                path = path.slice(0, path.indexOf(step));
+                startIndex = 0;
+                lastSelectedName = null;
+                const last = path[path.length - 1];
+                actions.selectSets(
+                    path.length ? setsOf(path) : [],
+                    last ? setsLabelOf(last.field, last.name) : null
+                );
+            });
 
         itemsTrack.selectAll("button")
             .data(groups, item => item.name)
             .join("button")
             .attr("type", "button")
             .attr("class", item => "bar-pill" + (isSelected(item) ? " active" : ""))
-            .text(item => item.name)
-            .on("click", (event, item) => toggleGroup(item))
+            .text(item => item.label)
+            .on("click", (event, item) => drillInto(item))
             .order();
 
         layoutPills();
@@ -364,7 +406,8 @@ drillLabel.style("display", drill ? null : "none")
 
         const selected = groups.find(isSelected);
         const top = topArtists(lastState.sets);
-        drawTop(top, selected ? selected.name : (drill ? "Generation " + drill : null));
+        const lastStep = path[path.length - 1];
+        drawTop(top, selected ? selected.label : (lastStep ? labelOf(lastStep.field, lastStep.name) : null));
 
         const plotW = plot.node().clientWidth;
         const plotH = plot.node().clientHeight;
@@ -422,7 +465,7 @@ function measureLabels(size) {
         .attr("transform", "rotate(-45)")
         .style("text-anchor", "end")
         .style("font-size", size + "px")
-        .text(item.name));
+        .text(item.label));
     const h = d3.max(probe.selectAll("text").nodes(),
         node => node.getBoundingClientRect().height) / scale;
     probe.remove();
@@ -464,7 +507,7 @@ const yTickCount = Math.max(2, Math.min(5, Math.floor(chartHeight / (fontPx * 3)
             .call(d3.axisBottom(x)
                 .tickSize(3)
                 .tickValues(x.domain())
-                .tickFormat(name => name))
+                .tickFormat(name => labelByName.get(name)))
             .selectAll("text")
             .attr("transform", "rotate(-45)")
             .style("text-anchor", "end")
@@ -497,9 +540,9 @@ const yTickCount = Math.max(2, Math.min(5, Math.floor(chartHeight / (fontPx * 3)
             .attr("fill", baseColor)
             .attr("opacity", item => (!hasSelection || isSelected(item)) ? 1 : 0.45)
             .style("cursor", "pointer")
-            .on("click", (event, item) => toggleGroup(item))
+            .on("click", (event, item) => selectGroup(item))
             .append("title")
-            .text(item => item.name + ": " + (metric === "count"
+            .text(item => item.label + ": " + (metric === "count"
                 ? d3.format(",.0f")(valueOf(item)) + " cards"
                 : "$" + d3.format(",.0f")(valueOf(item))));
 
@@ -541,15 +584,15 @@ const yTickCount = Math.max(2, Math.min(5, Math.floor(chartHeight / (fontPx * 3)
     }
 
     function update(state) {
-    lastState = state;
-    // Reset Filters (ou qualquer limpeza de sets) fecha a geração aberta
-    if (drill && state.sets.length === 0) {
-        drill = null;
-        startIndex = 0;
-        lastSelectedName = null;
+        lastState = state;
+        // Reset Filters (ou qualquer limpeza de sets) fecha os níveis abertos
+        if (path.length > 0 && state.sets.length === 0) {
+            path = [];
+            startIndex = 0;
+            lastSelectedName = null;
+        }
+        render();
     }
-    render();
-}
 
     return { update: update };
 }

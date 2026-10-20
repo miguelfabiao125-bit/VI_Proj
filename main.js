@@ -10,7 +10,7 @@ async function main() {
         yearOfSet: yearsPerSet(cards)
     };
 
-    const state = { artists: [], years: [], sets: [], bubbles: [] };
+    const state = { artists: [], years: [], sets: [], setsLabel: null, bubbles: [] };
     const views = [];
 
      const actions = {
@@ -21,8 +21,9 @@ async function main() {
             updateViews();
         },
 
-        selectSets: function (setNames) {
+        selectSets: function (setNames, label) {
             state.sets = setNames;
+            state.setsLabel = setNames.length > 0 ? (label || null) : null;
             state.years = setNames
                 .map(name => data.yearOfSet.get(name))
                 .filter(year => year !== undefined);
@@ -60,6 +61,7 @@ async function main() {
             state.artists = [];
             state.years = [];
             state.sets = [];
+            state.setsLabel = null;
             state.bubbles = [];
             updateViews();
         },

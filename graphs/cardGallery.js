@@ -235,7 +235,8 @@ function createCardGallery(container, data, actions) {
     value: bubble.value
 }))).concat(lastState.sets.length === 0 ? [] : [{
     key: "sets",
-    label: lastState.sets.length === 1 ? "Set: " + lastState.sets[0] : "Sets: " + lastState.sets.length + " selected",
+    label: lastState.setsLabel
+        || (lastState.sets.length === 1 ? "Set: " + lastState.sets[0] : "Sets: " + lastState.sets.length + " selected"),
     field: "sets",
     value: null
 }]);
