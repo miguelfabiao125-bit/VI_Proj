@@ -366,42 +366,86 @@ drillLabel.style("display", drill ? null : "none")
         const top = topArtists(lastState.sets);
         drawTop(top, selected ? selected.name : (drill ? "Generation " + drill : null));
 
-        const width = plot.node().clientWidth;
-        const height = plot.node().clientHeight;
-        if (!width || !height) {
+        const plotW = plot.node().clientWidth;
+        const plotH = plot.node().clientHeight;
+        if (!plotW || !plotH) {
             return;
         }
-        svg.attr("width", width).attr("height", height);
 
-        const left = 50;
-        const right = 10;
-        const x = d3.scaleBand()
-            .domain(groups.map(item => item.name))
-            .range([0, width - left - right])
-            .padding(0.15);
+        // desenha num espaço virtual (largura de referência 1920) e o viewBox escala tudo
+        const REF_WIDTH = 1920;
+        const scale = container.closest(".card").clientWidth / REF_WIDTH;
+        const width = plotW / scale;
+        const height = plotH / scale;
 
-        const showLabels = x.step() >= 15;
-        const showValues = x.step() >= 28;
+        svg.attr("width", plotW)
+            .attr("height", plotH)
+            .attr("viewBox", `0 0 ${width} ${height}`);
 
-         let labelSpace = 28;
-        if (showLabels) {
-            const probe = svg.append("g").attr("class", "bar-axis");
-            groups.forEach(item => probe.append("text")
-                .attr("transform", "rotate(-45)")
-                .style("text-anchor", "end")
-                .text(item.name));
-            labelSpace = d3.max(probe.selectAll("text").nodes(),
-                node => node.getBoundingClientRect().height) + 12;
-            probe.remove();
-        }
+        // tamanhos reais das letras (vêm do CSS)
+function fontOf(className, inAxis) {
+    const g = svg.append("g").attr("class", inAxis ? "bar-axis" : null);
+    const px = parseFloat(
+        getComputedStyle(g.append("text").attr("class", className).text("0").node()).fontSize
+    ) || 10;
+    g.remove();
+    return px;
+}
+const fontPx = fontOf(null, true);               // texto dos eixos
+const titleFont = fontOf("bar-axis-title", false);
+const valueFont = fontOf("bar-value", false);
 
-        const margin = {
-            top: 16,
-            right: right,
-            bottom: Math.min(labelSpace, height * 0.45),
-            left: left
-        };
-        const chartHeight = height - margin.top - margin.bottom;
+// largura real do maior número do eixo Y
+const yFormat = d3.format("~s");
+const yProbe = svg.append("g").attr("class", "bar-axis");
+const tickLabelWidth = d3.max(
+    d3.scaleLinear().domain([0, d3.max(groups, valueOf)]).nice().ticks(5),
+    tick => yProbe.append("text").text(yFormat(tick)).node().getComputedTextLength()
+) || 0;
+yProbe.remove();
+
+const axisGap = 9 + 0.4 * fontPx;                // 6 (tick) + 3 (padding) + folga
+const left = axisGap + tickLabelWidth + titleFont;
+const right = Math.max(valueFont * 1.5, 6);      // metade do maior valor sobre a última barra
+
+const x = d3.scaleBand()
+    .domain(groups.map(item => item.name))
+    .range([0, width - left - right])
+    .padding(0.15);
+
+const showValues = x.step() >= valueFont * 3;
+
+// mede a altura dos nomes rodados a 45º para um dado tamanho de letra
+function measureLabels(size) {
+    const probe = svg.append("g").attr("class", "bar-axis");
+    groups.forEach(item => probe.append("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end")
+        .style("font-size", size + "px")
+        .text(item.name));
+    const h = d3.max(probe.selectAll("text").nodes(),
+        node => node.getBoundingClientRect().height) / scale;
+    probe.remove();
+    return h + 0.9 * size;
+}
+
+// os nomes aparecem sempre: se não couberem, a letra encolhe só o necessário
+let labelFont = Math.min(fontPx, x.step() / 1.15);
+let labelSpace = measureLabels(labelFont);
+const maxLabelSpace = height * 0.4;
+if (labelSpace > maxLabelSpace) {
+    labelFont *= maxLabelSpace / labelSpace;
+    labelSpace = measureLabels(labelFont);
+}
+
+const margin = {
+    top: valueFont * 1.6 + 2,                    // espaço para o valor da barra mais alta
+    right: right,
+    bottom: labelSpace,
+    left: left
+};
+const chartHeight = height - margin.top - margin.bottom;
+const yTickCount = Math.max(2, Math.min(5, Math.floor(chartHeight / (fontPx * 3))));
 
         const y = d3.scaleLinear()
             .domain([0, d3.max(groups, valueOf)]).nice()
@@ -412,28 +456,33 @@ drillLabel.style("display", drill ? null : "none")
 
         chart.append("g")
             .attr("class", "bar-axis")
-            .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format("~s")));
+            .call(d3.axisLeft(y).ticks(yTickCount).tickFormat(d3.format("~s")));
 
         chart.append("g")
             .attr("class", "bar-axis")
             .attr("transform", `translate(0,${chartHeight})`)
             .call(d3.axisBottom(x)
                 .tickSize(3)
-                .tickValues(showLabels ? x.domain() : [])
+                .tickValues(x.domain())
                 .tickFormat(name => name))
             .selectAll("text")
             .attr("transform", "rotate(-45)")
             .style("text-anchor", "end")
+            .style("font-size", labelFont + "px")
             .attr("dx", "-0.4em")
             .attr("dy", "0.2em");
 
-        chart.append("text")
+        const yTitle = chart.append("text")
             .attr("class", "bar-axis-title")
             .attr("transform", "rotate(-90)")
             .attr("x", -chartHeight / 2)
-            .attr("y", -38)
+            .attr("y", -(axisGap + tickLabelWidth))
             .attr("text-anchor", "middle")
             .text(metric === "count" ? "Number of cards" : "Value ($)");
+
+        if (yTitle.node().getComputedTextLength() > chartHeight) {
+            yTitle.remove();
+        }
 
         const hasSelection = lastState.sets.length > 0;
         chart.selectAll(".bar")
@@ -477,7 +526,7 @@ drillLabel.style("display", drill ? null : "none")
                 .append("text")
                 .attr("class", "bar-value")
                 .attr("x", item => x(item.name) + x.bandwidth() / 2)
-                .attr("y", item => y(valueOf(item)) - 4)
+                .attr("y", item => y(valueOf(item)) - 0.3 * valueFont)
                 .attr("text-anchor", "middle")
                 .style("pointer-events", "none")
                 .text(item => d3.format(".3~s")(valueOf(item)));
@@ -485,7 +534,7 @@ drillLabel.style("display", drill ? null : "none")
             chart.append("text")
                 .attr("class", "bar-value")
                 .attr("x", x(selected.name) + x.bandwidth() / 2)
-                .attr("y", y(valueOf(selected)) - 6)
+                .attr("y", y(valueOf(selected)) - 0.3 * valueFont)
                 .attr("text-anchor", "middle")
                 .text(d3.format(".3~s")(valueOf(selected)));
         }

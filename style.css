@@ -1,5 +1,6 @@
 :root {
     --dashboard-font: "Futura", "Futura PT", "Jost", "Century Gothic", "Trebuchet MS", sans-serif;
+    --ratio: 1.7778;   /* largura/altura do teu design. Ajusta à proporção do img/background.png */
 }
 
 * {
@@ -16,13 +17,18 @@ textarea {
 
 body {
     margin: 0;
-    background: #e9e9e9;
+    height: 100vh;
+    height: 100dvh;
+    display: grid;
+    place-items: center;
+    background: #111;          /* cor das faixas laterais/superior. Ajusta à tua paleta */
     overflow: hidden;
 }
 
 .card {
-    width: 100vw;
-    height: 100vh;
+    width: min(100vw, 100vh * var(--ratio));
+    aspect-ratio: var(--ratio);
+    height: auto;              /* a altura vem do aspect-ratio */
     margin: 0;
     position: relative;
     overflow: hidden;
@@ -84,8 +90,8 @@ body {
     width: 100%;
     height: 50%;
     display: flex;
-    gap: 10px;
-    padding: 10px;
+    gap: 0.6cqw;
+    padding: 0.6cqw;
     box-sizing: border-box;
 }
 
@@ -114,7 +120,7 @@ body {
 .line-chart-help {
     position: absolute;
     left: -0.0cqw;   
-    bottom: 45px;
+    bottom: 2.4cqw;
     z-index: 4;
 }
 
@@ -867,10 +873,9 @@ body {
 .bar-plot { flex: 1; min-width: 0; min-height: 0; position: relative; }
 .bar-plot svg { position: absolute; top: 0; left: 0; display: block; }
 
-.bar-axis text { font-size: 0.65cqw; fill: #222; }
-.bar-axis-title { font-size: 0.8cqw; fill: #222; }
-.bar-value { font-size: 0.7cqw; fill: #111; }
-
+.bar-axis text { font-size: 12.5px; fill: #222; }
+.bar-axis-title { font-size: 15px; fill: #222; }
+.bar-value { font-size: 13.5px; fill: #111; }
 
 .bar-top {
     flex: none;
@@ -971,11 +976,25 @@ body {
 
 .bubble-panel { position: relative; }
 
+.bubble-title-row {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7cqw;
+}
+
+.bubble-title-row .chart-title {
+    margin: 0;
+}
+
 .bubble-help {
+    position: relative;   /* continua a ser o ponto de ancoragem do popover */
     left: auto;
+    right: auto;
+    top: auto;
     bottom: auto;
-    top: 0.8cqw;
-    right: 0.8cqw;
+    flex: none;
 }
 
 .bubble-help .line-chart-help-popover {
@@ -993,3 +1012,6 @@ body {
 .bubble-help .line-chart-help-popover strong {
     font-size: 0.9cqw;
 }
+
+.line-chart-container .tick text { font-size: 0.75cqw; }
+.line-chart-axis-label { font-size: 0.9cqw; }

@@ -86,10 +86,13 @@ function createBubbleChart(container, data, actions) {
         .append("div")
         .attr("class", "bubble-panel");
 
-    panel.append("div").attr("class", "chart-title").text("Card Distribution");
+        const titleRow = panel.append("div").attr("class", "bubble-title-row");
 
-    const help = panel.append("div").attr("class", "line-chart-help bubble-help");
-    help.append("button")
+titleRow.append("div").attr("class", "chart-title").text("Card Distribution");
+
+const help = titleRow.append("div").attr("class", "line-chart-help bubble-help");
+
+      help.append("button")
         .attr("type", "button")
         .attr("class", "line-chart-help-button")
         .attr("aria-label", "Show bubble chart instructions")

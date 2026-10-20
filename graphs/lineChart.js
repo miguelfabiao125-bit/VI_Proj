@@ -1,19 +1,20 @@
 function createLineChart(container, data, actions) {
     container.classList.add("line-chart-container");
 
-    const margin = { top: 26, right: 30, bottom: 45, left: 55 };
     const width = container.clientWidth;
     const height = container.clientHeight;
+    const k = Math.max(0.6, width / 950);   // 950 = largura de referência do gráfico
+    const margin = { top: 44 * k, right: 30 * k, bottom: 45 * k, left: 55 * k };
     const chartWidth = width - margin.left - margin.right;
-    const chartHeight = height - margin.top - margin.bottom;
+    const chartHeight = Math.max(40, height - margin.top - margin.bottom);
     const time = 320;
-    const yAxisSteps = [1, 2, 5, 10, 25, 50, 100, 200, 311];
+    const yAxisSteps = [ 1, 2, 5, 10, 25, 50, 100, 200, 311];
 
     const styles = {
-        normal:   { stroke: "lightgray", width: 1.5, opacity: 0.7 },
-        dimmed:   { stroke: "lightgray", width: 1.5, opacity: 0.4 },
-        selected: { stroke: "red",       width: 3,   opacity: 1 }
-    };
+    normal:   { stroke: "lightgray", width: 1.5 * k, opacity: 0.7 },
+    dimmed:   { stroke: "lightgray", width: 1.5 * k, opacity: 0.4 },
+    selected: { stroke: "red",       width: 3 * k,   opacity: 1 }
+};
 
     const svg = d3.select(container).append("svg")
         .attr("width", width)
@@ -70,12 +71,26 @@ function createLineChart(container, data, actions) {
             .text(text);
     }
 
-    addText("Pokémon Cards Produced per Artist over Time", chartWidth / 2, -10).attr("class", "line-chart-title");
-    addText("Year", chartWidth / 2, chartHeight + 38);
-    addText("Number of Cards", -chartHeight / 2, -40).attr("transform", "rotate(-90)");
+    addText("Pokémon Cards Produced per Artist over Time", chartWidth / 2, -16 * k)
+    .attr("class", "line-chart-title");
+    addText("Year", chartWidth / 2, chartHeight + 38 * k)
+        .attr("class", "line-chart-axis-label");
+    addText("Number of Cards", -chartHeight / 2, -40 * k)
+        .attr("class", "line-chart-axis-label")
+        .attr("transform", "rotate(-90)");
 
     const xAxis = chart.append("g").attr("transform", `translate(0,${chartHeight})`);
     const yAxis = chart.append("g");
+
+    function spaced(ticks) {
+    const kept = [];
+    ticks.slice().sort((a, b) => b - a).forEach(function (tick) {
+        if (kept.length === 0 || y(tick) - y(kept[kept.length - 1]) >= 15 * k) {
+            kept.push(tick);
+        }
+    });
+    return kept;
+}
 
     function drawAxes(duration) {
         const years = x.domain()[1] - x.domain()[0];
@@ -84,7 +99,7 @@ function createLineChart(container, data, actions) {
         xAxis.transition().duration(duration)
             .call(d3.axisBottom(x).ticks(xTicks).tickFormat(d3.format("d")));
         yAxis.transition().duration(duration)
-            .call(d3.axisLeft(y).tickValues(yTicks));
+    .call(d3.axisLeft(y).tickValues(spaced(yTicks)));
     }
 
     drawAxes(0);
@@ -150,7 +165,7 @@ function createLineChart(container, data, actions) {
 
     applyStyle(lines, styles.normal);
 
-        const label = addText("", chartWidth - 10, 8)
+    const label = addText("", chartWidth - 10 * k, 8 * k)
         .attr("class", "line-chart-label")
         .attr("text-anchor", "end")
         .attr("fill", "red")

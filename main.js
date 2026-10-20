@@ -70,27 +70,38 @@ async function main() {
     }
 
     function addView(containerId, createChart) {
-        const view = { container: document.getElementById(containerId), chart: null };
-        let frame;
+    const view = { container: document.getElementById(containerId), chart: null };
+    let timer;
+    let lastW = 0;
+    let lastH = 0;
 
-        function draw() {
-            if (view.container.clientWidth === 0 || view.container.clientHeight === 0) {
-                return;
-            }
-            view.container.innerHTML = "";
-            view.chart = createChart(view.container, data, actions);
-            view.chart.update(state);
+    function draw() {
+        const w = view.container.clientWidth;
+        const h = view.container.clientHeight;
+
+        if (w === 0 || h === 0) {
+            return;
+        }
+        if (w === lastW && h === lastH) {   // nada mudou, não redesenha
+            return;
         }
 
-        view.redraw = draw;
-
-        new ResizeObserver(function () {
-            cancelAnimationFrame(frame);
-            frame = requestAnimationFrame(draw);
-        }).observe(view.container);
-
-        views.push(view);
+        lastW = w;
+        lastH = h;
+        view.container.innerHTML = "";
+        view.chart = createChart(view.container, data, actions);
+        view.chart.update(state);
     }
+
+    view.redraw = draw;
+
+    new ResizeObserver(function () {
+        clearTimeout(timer);
+        timer = setTimeout(draw, 120);      // espera a transição de fullscreen acabar
+    }).observe(view.container);
+
+    views.push(view);
+}
 
     addView("line-chart", createLineChart);
     addView("bar-chart", createBarChart);
@@ -99,16 +110,6 @@ async function main() {
     addView("card-gallery", createCardGallery);
     addView("bubble-chart", createBubbleChart);
 
-    let windowResizeFrame;
-    function redrawAfterViewportChange() {
-        cancelAnimationFrame(windowResizeFrame);
-        windowResizeFrame = requestAnimationFrame(function () {
-            views.forEach(view => view.redraw());
-        });
-    }
-
-    window.addEventListener("resize", redrawAfterViewportChange);
-    document.addEventListener("fullscreenchange", redrawAfterViewportChange);
 
     window.selectSets = actions.selectSets; 
 }
