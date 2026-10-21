@@ -939,8 +939,7 @@ body {
 }
 
 .bar-top-row.placeholder { cursor: default; }
-.bar-top-row:not(.placeholder):hover .bar-top-name,
-.bar-top-row.selected .bar-top-name { text-decoration: underline; }
+.bar-top-row:not(.placeholder):hover .bar-top-name { text-decoration: underline; }
 
 .bar-top-slot {
     flex: none;
