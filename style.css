@@ -1,6 +1,6 @@
 :root {
     --dashboard-font: "Futura", "Futura PT", "Jost", "Century Gothic", "Trebuchet MS", sans-serif;
-    --ratio: 1.7778;   /* largura/altura do teu design. Ajusta à proporção do img/background.png */
+    --ratio: 1.7778;  
 }
 
 * {
@@ -21,14 +21,14 @@ body {
     height: 100dvh;
     display: grid;
     place-items: center;
-    background: #111;          /* cor das faixas laterais/superior. Ajusta à tua paleta */
+    background: #111;         
     overflow: hidden;
 }
 
 .card {
     width: min(100vw, 100vh * var(--ratio));
     aspect-ratio: var(--ratio);
-    height: auto;              /* a altura vem do aspect-ratio */
+    height: auto;             
     margin: 0;
     position: relative;
     overflow: hidden;
@@ -96,7 +96,7 @@ body {
 }
 
 .view-left {
-    --bar-offset: 2cqw;   /* distância da faixa preta: aumenta/diminui para afinar */
+    --bar-offset: 2cqw;  
     flex: 1;
     min-width: 0;
     min-height: 0;
@@ -765,7 +765,7 @@ body {
 
 .bar-scroll {
     flex: none;
-    margin-right: 5cqw;   /* encurta a barra para não ficar em cima do círculo da Pokébola */
+    margin-right: 5cqw;  
     display: flex;
     align-items: center;
     gap: 0.3cqw;
@@ -823,7 +823,7 @@ body {
     flex: none;
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;    /* sempre uma só linha */
+    flex-wrap: nowrap;    
     gap: 0.5cqw;
     min-width: 0;
     padding: 0.2cqw 0;
@@ -894,7 +894,7 @@ body {
 .bar-top {
     flex: none;
     width: 17cqw;
-    margin-left: 1cqw;   /* afasta o Top 3 (cartas e meios círculos) do gráfico */
+    margin-left: 1cqw;   
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -1003,7 +1003,7 @@ body {
 }
 
 .bubble-help {
-    position: relative;   /* continua a ser o ponto de ancoragem do popover */
+    position: relative;  
     left: auto;
     right: auto;
     top: auto;

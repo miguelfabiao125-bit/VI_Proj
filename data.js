@@ -1,4 +1,3 @@
-//
 const IMAGE_SOURCES = {
     remote: "https://tcgplayer-cdn.tcgplayer.com/product/",
     //para o com a pasta das imagens

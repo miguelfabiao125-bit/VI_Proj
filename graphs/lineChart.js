@@ -3,7 +3,7 @@ function createLineChart(container, data, actions) {
 
     const width = container.clientWidth;
     const height = container.clientHeight;
-    const k = Math.max(0.6, width / 950);   // 950 = largura de referência do gráfico
+    const k = Math.max(0.6, width / 950);   
     const margin = { top: 44 * k, right: 30 * k, bottom: 45 * k, left: 55 * k };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = Math.max(40, height - margin.top - margin.bottom);

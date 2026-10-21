@@ -84,7 +84,7 @@ async function main() {
         if (w === 0 || h === 0) {
             return;
         }
-        if (w === lastW && h === lastH) {   // nada mudou, não redesenha
+        if (w === lastW && h === lastH) {   
             return;
         }
 
@@ -99,7 +99,7 @@ async function main() {
 
     new ResizeObserver(function () {
         clearTimeout(timer);
-        timer = setTimeout(draw, 120);      // espera a transição de fullscreen acabar
+        timer = setTimeout(draw, 120);      
     }).observe(view.container);
 
     views.push(view);

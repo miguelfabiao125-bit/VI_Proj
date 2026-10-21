@@ -10,7 +10,7 @@ function createBarChart(container, data, actions) {
     ].filter(item => data.cards.some(card => card[item.field]));
 
     let current = groupings.find(item => item.field === "generation") || groupings[0];
-    let path = [];   // ex.: [{field:"generation", name:"Third"}, {field:"series", name:"EX"}]
+    let path = [];   
     let lastState = { artists: [], years: [], sets: [], bubbles: [] };
     let startIndex = 0;      
     let maxStart = 0;
@@ -40,7 +40,6 @@ function createBarChart(container, data, actions) {
         return Array.from(new Set(cardsIn(steps).map(card => card.set)));
     }
 
-    // campo das barras/pills no nível atual
     function childField() {
         if (path.length === 0) {
             return current.field;
@@ -97,12 +96,10 @@ function createBarChart(container, data, actions) {
             && group.sets.every(name => lastState.sets.includes(name));
     }
 
-    // texto do filtro que aparece na galeria
     function setsLabelOf(field, name) {
         return fieldTitle[field] + ": " + name;
     }
 
-    // BARRAS: só selecionam/destacam; o gráfico nunca muda
     function selectGroup(group) {
         if (isSelected(group)) {
             const last = path[path.length - 1];
@@ -115,9 +112,8 @@ function createBarChart(container, data, actions) {
         }
     }
 
-    // PILLS: mudam o gráfico (entram no nível seguinte)
     function drillInto(group) {
-        if (levels.indexOf(group.field) === levels.length - 1) {      // sets são o último nível
+        if (levels.indexOf(group.field) === levels.length - 1) {      
             selectGroup(group);
             return;
         }
@@ -194,7 +190,6 @@ function createBarChart(container, data, actions) {
         moveBy(step);
     });
 
-    // por baixo da faixa de pills: gráfico à esquerda, Top 3 à direita
     const lower = body.append("div").attr("class", "bar-lower");
     const plot = lower.append("div").attr("class", "bar-plot");
     const svg = plot.append("svg");
@@ -388,7 +383,6 @@ if (card) {
                 );
             });
 
-        // ao nível dos sets não se enumeram pills: as barras já chegam
         itemsTrack.selectAll("button")
             .data(field === "set" ? [] : groups, item => item.name)
             .join("button")
@@ -423,7 +417,6 @@ if (card) {
             return;
         }
 
-        // desenha num espaço virtual (largura de referência 1920) e o viewBox escala tudo
         const REF_WIDTH = 1920;
         const scale = container.closest(".card").clientWidth / REF_WIDTH;
         const width = plotW / scale;
@@ -433,7 +426,7 @@ if (card) {
             .attr("height", plotH)
             .attr("viewBox", `0 0 ${width} ${height}`);
 
-        // tamanhos reais das letras (vêm do CSS)
+        
 function fontOf(className, inAxis) {
     const g = svg.append("g").attr("class", inAxis ? "bar-axis" : null);
     const px = parseFloat(
@@ -442,11 +435,10 @@ function fontOf(className, inAxis) {
     g.remove();
     return px;
 }
-const fontPx = fontOf(null, true);               // texto dos eixos
+const fontPx = fontOf(null, true);               
 const titleFont = fontOf("bar-axis-title", false);
 const valueFont = fontOf("bar-value", false);
 
-// largura real do maior número do eixo Y
 const yFormat = d3.format("~s");
 const yProbe = svg.append("g").attr("class", "bar-axis");
 const tickLabelWidth = d3.max(
@@ -455,16 +447,15 @@ const tickLabelWidth = d3.max(
 ) || 0;
 yProbe.remove();
 
-const axisGap = 9 + 0.4 * fontPx;                // 6 (tick) + 3 (padding) + folga
+const axisGap = 9 + 0.4 * fontPx;                
 const baseLeft = axisGap + tickLabelWidth + titleFont;
-const right = Math.max(valueFont * 1.5, 6);      // metade do maior valor sobre a última barra
+const right = Math.max(valueFont * 1.5, 6);      
 
 const makeX = l => d3.scaleBand()
     .domain(groups.map(item => item.name))
     .range([0, Math.max(10, width - l - right)])
     .padding(0.15);
 
-// quanto o nome rodado a 45º se estende para a esquerda do início do eixo X
 function labelOverhang(size, xs) {
     const probe = svg.append("g").attr("class", "bar-axis");
     const need = d3.max(groups, item => {
@@ -479,7 +470,6 @@ function labelOverhang(size, xs) {
     return Math.max(0, need);
 }
 
-// a margem esquerda cresce o necessário para o primeiro nome nunca ser cortado
 const maxLeft = width * 0.3;
 let left = baseLeft;
 let x = makeX(left);
@@ -494,14 +484,13 @@ for (let i = 0; i < 6; i += 1) {
     left = wanted;
 }
 x = makeX(left);
-// se mesmo com o limite não couber, a letra encolhe
+
 for (let i = 0; i < 8 && labelOverhang(labelFont, x) + 2 > left; i += 1) {
     labelFont *= 0.92;
 }
 
 const showValues = x.step() >= valueFont * 3;
 
-// mede a altura dos nomes rodados a 45º para um dado tamanho de letra
 function measureLabels(size) {
     const probe = svg.append("g").attr("class", "bar-axis");
     groups.forEach(item => probe.append("text")
@@ -515,7 +504,6 @@ function measureLabels(size) {
     return h + 0.9 * size;
 }
 
-// os nomes aparecem sempre: se não couberem na vertical, a letra encolhe só o necessário
 let labelSpace = measureLabels(labelFont);
 const maxLabelSpace = height * 0.4;
 if (labelSpace > maxLabelSpace) {
@@ -524,7 +512,7 @@ if (labelSpace > maxLabelSpace) {
 }
 
 const margin = {
-    top: valueFont * 1.6 + 2,                    // espaço para o valor da barra mais alta
+    top: valueFont * 1.6 + 2,                
     right: right,
     bottom: labelSpace,
     left: left
@@ -627,8 +615,7 @@ const yTickCount = Math.max(2, Math.min(5, Math.floor(chartHeight / (fontPx * 3)
 
     function update(state) {
         lastState = state;
-        // Reset Filters (ou qualquer limpeza de sets) fecha os níveis abertos
-        if (path.length > 0 && state.sets.length === 0) {
+          if (path.length > 0 && state.sets.length === 0) {
             path = [];
             startIndex = 0;
             lastSelectedName = null;

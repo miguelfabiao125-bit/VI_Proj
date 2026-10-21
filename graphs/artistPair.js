@@ -33,7 +33,6 @@ function createArtistPair(container, data) {
     const topArea = d3.select(container.parentNode);
     topArea.selectAll(".pair-info").remove();
 
-    // Bloco: nome -> total -> setas
     const info = topArea.append("div")
         .attr("class", "pair-info")
         .style("display", "none");
@@ -130,8 +129,8 @@ function createArtistPair(container, data) {
         showArtist(artists[index]);
 
         info.style("display", "flex");
-        name.text(artists[index]);                    // artista que está a ser mostrado
-        totalNumber.text(totalCards());               // soma de TODOS os selecionados
+        name.text(artists[index]);                   
+        totalNumber.text(totalCards());             
         const many = artists.length > 1;
         counter.text((index + 1) + " / " + artists.length)
             .style("display", many ? null : "none");
