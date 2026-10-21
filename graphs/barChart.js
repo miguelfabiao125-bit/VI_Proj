@@ -24,7 +24,7 @@ function createBarChart(container, data, actions) {
     const valueOf = item => item[metric];
     const keyOf = (card, field) => (card[field] || "Unknown").trim();
 
-    const levels = ["generation", "series"];
+    const levels = ["generation", "series", "set"];
     const fieldTitle = { generation: "Generation", series: "Series", set: "Set" };
     const generationLabels = {
         First: "1st Gen", Second: "2nd Gen", Third: "3rd Gen", Fourth: "4th Gen",
@@ -194,10 +194,12 @@ function createBarChart(container, data, actions) {
         moveBy(step);
     });
 
-    const plot = main.append("div").attr("class", "bar-plot");
+    // por baixo da faixa de pills: gráfico à esquerda, Top 3 à direita
+    const lower = body.append("div").attr("class", "bar-lower");
+    const plot = lower.append("div").attr("class", "bar-plot");
     const svg = plot.append("svg");
 
-     const side = body.append("div").attr("class", "bar-top");
+    const side = lower.append("div").attr("class", "bar-top");
     side.append("div").attr("class", "bar-top-title").text("Top 3");
     const subtitle = side.append("div").attr("class", "bar-top-subtitle");
     const topList = side.append("div").attr("class", "bar-top-list");
@@ -213,6 +215,11 @@ function createBarChart(container, data, actions) {
     function layoutPills() {
         const pills = itemsTrack.selectAll("button").nodes();
         if (pills.length === 0) {
+            startIndex = 0;
+            maxStart = 0;
+            endIndex = 0;
+            visibleCount = 0;
+            updateScrollbar();
             return;
         }
 
@@ -381,8 +388,9 @@ if (card) {
                 );
             });
 
+        // ao nível dos sets não se enumeram pills: as barras já chegam
         itemsTrack.selectAll("button")
-            .data(groups, item => item.name)
+            .data(field === "set" ? [] : groups, item => item.name)
             .join("button")
             .attr("type", "button")
             .attr("class", item => "bar-pill" + (isSelected(item) ? " active" : ""))
@@ -448,13 +456,48 @@ const tickLabelWidth = d3.max(
 yProbe.remove();
 
 const axisGap = 9 + 0.4 * fontPx;                // 6 (tick) + 3 (padding) + folga
-const left = axisGap + tickLabelWidth + titleFont;
+const baseLeft = axisGap + tickLabelWidth + titleFont;
 const right = Math.max(valueFont * 1.5, 6);      // metade do maior valor sobre a última barra
 
-const x = d3.scaleBand()
+const makeX = l => d3.scaleBand()
     .domain(groups.map(item => item.name))
-    .range([0, width - left - right])
+    .range([0, Math.max(10, width - l - right)])
     .padding(0.15);
+
+// quanto o nome rodado a 45º se estende para a esquerda do início do eixo X
+function labelOverhang(size, xs) {
+    const probe = svg.append("g").attr("class", "bar-axis");
+    const need = d3.max(groups, item => {
+        const w = probe.append("text")
+            .style("font-size", size + "px")
+            .text(item.label)
+            .node().getComputedTextLength();
+        const reach = (w + 0.8 * size) * Math.SQRT1_2 + 0.5 * size;
+        return reach - (xs(item.name) + xs.bandwidth() / 2);
+    });
+    probe.remove();
+    return Math.max(0, need);
+}
+
+// a margem esquerda cresce o necessário para o primeiro nome nunca ser cortado
+const maxLeft = width * 0.3;
+let left = baseLeft;
+let x = makeX(left);
+let labelFont = Math.min(fontPx, x.step() / 1.15);
+for (let i = 0; i < 6; i += 1) {
+    x = makeX(left);
+    labelFont = Math.min(fontPx, x.step() / 1.15);
+    const wanted = Math.max(baseLeft, Math.min(labelOverhang(labelFont, x) + 2, maxLeft));
+    if (Math.abs(wanted - left) < 0.5) {
+        break;
+    }
+    left = wanted;
+}
+x = makeX(left);
+// se mesmo com o limite não couber, a letra encolhe
+for (let i = 0; i < 8 && labelOverhang(labelFont, x) + 2 > left; i += 1) {
+    labelFont *= 0.92;
+}
 
 const showValues = x.step() >= valueFont * 3;
 
@@ -472,8 +515,7 @@ function measureLabels(size) {
     return h + 0.9 * size;
 }
 
-// os nomes aparecem sempre: se não couberem, a letra encolhe só o necessário
-let labelFont = Math.min(fontPx, x.step() / 1.15);
+// os nomes aparecem sempre: se não couberem na vertical, a letra encolhe só o necessário
 let labelSpace = measureLabels(labelFont);
 const maxLabelSpace = height * 0.4;
 if (labelSpace > maxLabelSpace) {
@@ -540,7 +582,7 @@ const yTickCount = Math.max(2, Math.min(5, Math.floor(chartHeight / (fontPx * 3)
             .attr("fill", baseColor)
             .attr("opacity", item => (!hasSelection || isSelected(item)) ? 1 : 0.45)
             .style("cursor", "pointer")
-            .on("click", (event, item) => selectGroup(item))
+            .on("click", (event, item) => drillInto(item))
             .append("title")
             .text(item => item.label + ": " + (metric === "count"
                 ? d3.format(",.0f")(valueOf(item)) + " cards"
